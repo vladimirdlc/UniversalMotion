@@ -15,25 +15,24 @@ def writeFrame(file, node, i):
             if len(child.channels) > 0:
                 writeFrame(file, child, i)
 
-def getFullFrame(node, i):
-        fullFrame = [];
-        
+def getFullFrame(node, i, fullFrame=[]):
         if  node.position:
-            fullFrame.append(node.position)
+            fullFrame.append(node.position[i])
         
-        fullFrame.append(node.rotation)
+        fullFrame.append(node.rotation[i])
 
-        print(fullFrame)
-        
         for child in node.children:
             if len(child.channels) > 0:
-                getFullFrame(child, i)
+                getFullFrame(child, i, fullFrame)
+
+        return fullFrame
 
 
 test = bvh.reader.BvhReader('data/test.bvh')
 test.read();
 file = open('test.txt', 'w')
 
+print(getFullFrame(test.root, 0))
 writeFrame(file, test.root, 0)
 file.write("\n")
 file.close()
