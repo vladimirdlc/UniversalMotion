@@ -28,51 +28,52 @@ def getFullFrame(node, i, fullFrame=[]):
                 getFullFrame(child, i, fullFrame)
 
         return fullFrame
+        
+def processBVH(fullPath):
+        #test = bvh.reader.BvhReader(mypath+onlyfiles[0])
+        #test.read();
+        file = open(fullPath, 'r')
+
+        data = []
+        frameDataStart = False
+
+        for line in file:
+            line = line.strip()
+            if not line: continue
+
+            if line.startswith('Frame '):
+                frameDataStart = True
+                continue
+
+            if frameDataStart:
+                data.append(line)
+
+
+        framesQData = []
+
+        for currentFrame in data:
+
+            quaternionData = []
+            floats = [float(x) for x in currentFrame.split()]
+            print(floats)
+            for x,y,z in zip(*[iter(floats)]*3):
+                quat = Quat((x,y,z))
+                quaternionData.extend((quat.q+1)/2) #normalize the data
+
+            framesQData.append(quaternionData)
+
+        print(len(framesQData))
+        print(len(framesQData[0]))
+        #writeFrame(file, test.root, 0)
+        #file.write("\n")
+        file.close()
 
 
 mypath = 'data/CMU/107/'
 onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 
-test = bvh.reader.BvhReader(mypath+onlyfiles[0])
-#test.read();
-file = open(mypath+onlyfiles[0], 'r')
+for filename in onlyfiles:
+    processBVH(mypath+filename)
 
-data = []
-frameDataStart = False
-
-for line in file:
-    line = line.strip()
-    if not line: continue
-
-    if line.startswith('Frame '):
-        frameDataStart = True
-        continue
-
-    if frameDataStart:
-        data.append(line)
-
-
-framesQData = []
-
-
-for currentFrame in data:
-
-    quaternionData = []
-    floats = [float(x) for x in currentFrame.split()]
-    print(floats)
-    for x,y,z in zip(*[iter(floats)]*3):
-        quat = Quat((x,y,z))
-        quaternionData.extend((quat.q+1)/2) #normalize the data
-
-    framesQData.append(quaternionData)
-
-print(len(framesQData))
-print(len(framesQData[0]))
-#writeFrame(file, test.root, 0)
-#file.write("\n")
-file.close()
-   
-   
-   
 #getFullFrame(file, test.root, 0)
 
