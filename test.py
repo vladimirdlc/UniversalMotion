@@ -2,6 +2,9 @@ from Quaternion import Quat
 import bvh.reader
 import bvh.helpers
 
+from os import listdir
+from os.path import isfile, join
+
 
 def writeFrame(file, node, i):
         if  node.position:
@@ -28,7 +31,10 @@ def getFullFrame(node, i, fullFrame=[]):
         return fullFrame
 
 
-test = bvh.reader.BvhReader('data/test.bvh')
+mypath = 'data/CMU/102/'
+onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+
+test = bvh.reader.BvhReader(mypath+onlyfiles[0])
 test.read();
 file = open('test.txt', 'w')
 
