@@ -74,10 +74,10 @@ def processBVH(fullPath):
         
         return framesQData
 
-encoding_dim = 80  # 88 floats -> compression of factor 50%, assuming the input is 176 floats
+encoding_dim = 120  # 88 floats -> compression of factor 50%, assuming the input is 176 floats
 
 # this is our input placeholder
-input_frame = Input(shape=(176,))
+input_frame = Input(shape=(44, 4, 1))
 # "encoded" is the encoded representation of the input
 encoded = Dense(encoding_dim, activation='relu')(input_frame)
 # "decoded" is the lossy reconstruction of the input
@@ -85,6 +85,7 @@ decoded = Dense(176, activation='sigmoid')(encoded)
 
 # this model maps an input to its reconstruction
 autoencoder = Model(input_frame, decoded)
+autoencoder.summary()
 
 # this model maps an input to its encoded representation
 encoder = Model(input_frame, encoded)
@@ -106,7 +107,7 @@ qdata = []
 for folder in onlyfolders:
     onlyfiles = [f for f in listdir(mypath+folder) if isfile(join(mypath+folder, f))]
     for filename in onlyfiles:
-        qdata.extend(processBVH(mypath+folder+'/'+filename))
+        qdata.append(processBVH(mypath+folder+'/'+filename))
 
 dataSplitPoint = int(len(qdata)*0.2)
 trainingData = array(qdata[dataSplitPoint:len(qdata)])
