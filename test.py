@@ -8,6 +8,7 @@ from os.path import isfile, join
 from keras.layers import Input, Dense
 from keras.models import Model
 from numpy import array
+import numpy as np
 
 import math
 
