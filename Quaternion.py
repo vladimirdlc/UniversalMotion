@@ -96,8 +96,8 @@ class Quat(object):
       :param q: list or array of normalized quaternion elements
       """
       q = np.array(q)
-      if abs(np.sum(q**2) - 1.0) > 1e-6:
-         raise ValueError('Quaternion must be normalized so sum(q**2) == 1; use Quaternion.normalize')
+      #if abs(np.sum(q**2) - 1.0) > 1e-6:
+      #   raise ValueError('Quaternion must be normalized so sum(q**2) == 1; use Quaternion.normalize')
       self._q = (q if q[3] > 0 else -q)
       # Erase internal values of other representations
       self._equatorial = None

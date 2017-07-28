@@ -1,4 +1,5 @@
 from Quaternion import Quat
+from Quaternion import normalize
 import bvh.reader
 import bvh.helpers
 
@@ -69,8 +70,10 @@ def processBVH(fullPath):
             
             for x,y,z in zip(*[iter(floats)]*3):
                 quat = Quat((x,y,z))
+                #quaternionData.append(quat.q)
                 quaternionData.append((quat.q+1)/2)
                 #quaternionData.append((sigmoid(x),sigmoid(y),sigmoid(z))) #normalize the data, extend?
+                #quaternionData.append((x,y,z))
 
             framesQData.append(quaternionData)
 
@@ -96,51 +99,75 @@ dataSplitPoint = int(len(qdata)*0.2)
 trainingData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
 validationData = array(qdata[0:dataSplitPoint]).astype('float32')
 
-#vdata = tdata
-
 trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
 validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
 
+#trainingData = trainingData.T
+#validationData = validationData.T
+
 input_size = len(trainingData[0])
-encoding_dim = int(input_size*0.1) # compression of factor 20%, assuming the input is nn floats
+#encoding_dim = int(input_size*0.5) # compression of factor 20%, assuming the input is nn floats
+
+
 
 # this is our input placeholder
 input_frame = Input(shape=(input_size,))
+
 # "encoded" is the encoded representation of the input
-encoded = Dense(encoding_dim, activation='relu')(input_frame)
+#encoded = Dense(encoding_dim, activation='relu')(input_frame)
+encoded = Dense(int(input_size*0.8), activation='relu')(input_frame)
+encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
+encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
+
+decoded = Dense(int(input_size*0.6), activation='relu')(encoded)
+decoded = Dense(int(input_size*0.8), activation='relu')(decoded)
+
 # "decoded" is the lossy reconstruction of the input
-decoded = Dense(input_size, activation='sigmoid')(encoded)
+decoded = Dense(input_size, activation='sigmoid')(decoded)
 
 # this model maps an input to its reconstruction
+
+
 autoencoder = Model(input_frame, decoded)
 autoencoder.summary()
 
-# this model maps an input to its encoded representation
-encoder = Model(input_frame, encoded)
 
-# create a placeholder for an encoded (176-dimensional) input
-encoded_input = Input(shape=(encoding_dim,))
 # retrieve the last layer of the autoencoder model
 decoder_layer = autoencoder.layers[-1]
-# create the decoder model
-decoder = Model(encoded_input, decoder_layer(encoded_input))
 
-autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+#autoencoder.compile(optimizer='adadelta', loss='mse')
+#autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy', metrics=['accuracy'])
+autoencoder.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+# For a mean squared error regression problem
+#autoencoder.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 
 autoencoder.fit(trainingData, trainingData,
-                epochs=200,
-                batch_size=256,
+                epochs=50,
+                batch_size=50,
                 shuffle=False,
                 validation_data=(validationData, validationData))
 
-encoded_quat = encoder.predict(trainingData)
-decoded_quat = decoder.predict(encoded_quat)
+#                validation_split=0.2)
+#model.fit(data, labels, validation_split=0.2)
+
+decoded_quat = autoencoder.predict(trainingData)
+
 
 file = open(mypath+'test.txt', 'w')
 
+#for frame in decoded_quat:
+#    for frameData in zip(*[iter(frame)]*input_size):
+#        file.write('\n'+str(frameData))
+
+decoded_quat = decoded_quat*2-1
+
 for frame in decoded_quat:
     for frameData in zip(*[iter(frame)]*input_size):
-        file.write('\n'+str(frameData))
+        len(frameData)
+        file.write('\n')
+        for x,y,z,w in zip(*[iter(frameData)]*4):
+            quat = Quat(normalize((x,y,z,w)))
+            file.write('{0} {1} {2}'.format(quat.ra, quat.dec, quat.roll))
 
 file.close()
 
