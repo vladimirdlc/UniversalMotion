@@ -116,17 +116,16 @@ input_frame = Input(shape=(input_size,))
 # "encoded" is the encoded representation of the input
 #encoded = Dense(encoding_dim, activation='relu')(input_frame)
 encoded = Dense(int(input_size*0.8), activation='relu')(input_frame)
-encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
-encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
+#encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
+#encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
 
-decoded = Dense(int(input_size*0.6), activation='relu')(encoded)
-decoded = Dense(int(input_size*0.8), activation='relu')(decoded)
+#decoded = Dense(int(input_size*0.6), activation='relu')(encoded)
+#decoded = Dense(int(input_size*0.8), activation='relu')(decoded)
 
 # "decoded" is the lossy reconstruction of the input
-decoded = Dense(input_size, activation='sigmoid')(decoded)
+decoded = Dense(input_size, activation='sigmoid')(encoded)
 
 # this model maps an input to its reconstruction
-
 
 autoencoder = Model(input_frame, decoded)
 autoencoder.summary()
@@ -137,15 +136,15 @@ decoder_layer = autoencoder.layers[-1]
 
 #autoencoder.compile(optimizer='adadelta', loss='mse')
 #autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy', metrics=['accuracy'])
-autoencoder.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+#autoencoder.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
 # For a mean squared error regression problem
-#autoencoder.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
+autoencoder.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 
 autoencoder.fit(trainingData, trainingData,
                 epochs=50,
                 batch_size=50,
                 shuffle=False,
-                validation_data=(validationData, validationData))
+                validation_data=(trainingData, trainingData))
 
 #                validation_split=0.2)
 #model.fit(data, labels, validation_split=0.2)
@@ -159,7 +158,8 @@ file = open(mypath+'test.txt', 'w')
 #    for frameData in zip(*[iter(frame)]*input_size):
 #        file.write('\n'+str(frameData))
 
-decoded_quat = decoded_quat*2-1
+#Denormalization
+decoded_quat = (decoded_quat*2)-1
 
 for frame in decoded_quat:
     for frameData in zip(*[iter(frame)]*input_size):
