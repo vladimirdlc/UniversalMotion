@@ -130,7 +130,7 @@ input_frame = Input(shape=(input_size,))
 
 # "encoded" is the encoded representation of the input
 #encoded = Dense(encoding_dim, activation='relu')(input_frame)
-encoded = Dense(int(input_size*0.8), activation='tanh')(input_frame)
+encoded = Dense(int(input_size-8), activation='tanh')(input_frame)
 #encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
 #encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
 
@@ -172,7 +172,7 @@ file = open(mypath+'test.txt', 'w')
 #decoded_quat = (decoded_quat*2)-1
 
 i = 0
-for frameData in trainingData:
+for frameData in decoded_quat:
     #for frameData in zip(*[iter(frame)]*input_size):
     file.write('\n')
     
