@@ -60,18 +60,28 @@ def processBVH(fullPath):
             if frameDataStart:
                 data.append(line)
 
-
         framesQData = []
+        rootPos = []
 
         for currentFrame in data:
             quaternionData = []
             floats = [float(x) for x in currentFrame.split()]
             #print(floats)
             
+            first = True
+            
             for x,y,z in zip(*[iter(floats)]*3):
+                if first:
+                    rootPos.append((x,y,z))
+                    first = False
+                
                 quat = Quat((x,y,z))
                 #quaternionData.append(quat.q)
-                quaternionData.append((quat.q+1)/2)
+                if quat.q[3] < 0:
+                    quaternionData.append(-quat.q)
+                else:
+                    quaternionData.append(quat.q)
+
                 #quaternionData.append((sigmoid(x),sigmoid(y),sigmoid(z))) #normalize the data, extend?
                 #quaternionData.append((x,y,z))
 
@@ -83,24 +93,29 @@ def processBVH(fullPath):
         #file.write("\n")
         file.close()
         
-        return framesQData
+        return framesQData, rootPos
 
 mypath = 'data/CMU/testing/'
 onlyfolders = [f for f in listdir(mypath) if not isfile(join(mypath, f))]
 
 qdata = []
+rootPos = []
 
 for folder in onlyfolders:
     onlyfiles = [f for f in listdir(mypath+folder) if isfile(join(mypath+folder, f))]
     for filename in onlyfiles:
-        qdata.extend(processBVH(mypath+folder+'/'+filename))
+        qFrame, qRootPos = processBVH(mypath+folder+'/'+filename)
+        qdata.extend(qFrame)
+        rootPos.extend(qRootPos)
 
 dataSplitPoint = int(len(qdata)*0.2)
-trainingData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
-validationData = array(qdata[0:dataSplitPoint]).astype('float32')
+
+trainingData = array(qdata).astype('float32')
+#trainingData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
+#validationData = array(qdata[0:dataSplitPoint]).astype('float32')
 
 trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
-validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
+#validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
 
 #trainingData = trainingData.T
 #validationData = validationData.T
@@ -115,7 +130,7 @@ input_frame = Input(shape=(input_size,))
 
 # "encoded" is the encoded representation of the input
 #encoded = Dense(encoding_dim, activation='relu')(input_frame)
-encoded = Dense(int(input_size*0.8), activation='relu')(input_frame)
+encoded = Dense(int(input_size*0.8), activation='tanh')(input_frame)
 #encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
 #encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
 
@@ -123,16 +138,11 @@ encoded = Dense(int(input_size*0.8), activation='relu')(input_frame)
 #decoded = Dense(int(input_size*0.8), activation='relu')(decoded)
 
 # "decoded" is the lossy reconstruction of the input
-decoded = Dense(input_size, activation='sigmoid')(encoded)
+decoded = Dense(input_size, activation='tanh')(encoded)
 
 # this model maps an input to its reconstruction
-
 autoencoder = Model(input_frame, decoded)
 autoencoder.summary()
-
-
-# retrieve the last layer of the autoencoder model
-decoder_layer = autoencoder.layers[-1]
 
 #autoencoder.compile(optimizer='adadelta', loss='mse')
 #autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy', metrics=['accuracy'])
@@ -141,7 +151,7 @@ decoder_layer = autoencoder.layers[-1]
 autoencoder.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 
 autoencoder.fit(trainingData, trainingData,
-                epochs=50,
+                epochs=100,
                 batch_size=50,
                 shuffle=False,
                 validation_data=(trainingData, trainingData))
@@ -159,15 +169,23 @@ file = open(mypath+'test.txt', 'w')
 #        file.write('\n'+str(frameData))
 
 #Denormalization
-decoded_quat = (decoded_quat*2)-1
+#decoded_quat = (decoded_quat*2)-1
 
-for frame in decoded_quat:
-    for frameData in zip(*[iter(frame)]*input_size):
-        len(frameData)
-        file.write('\n')
-        for x,y,z,w in zip(*[iter(frameData)]*4):
+i = 0
+for frameData in trainingData:
+    #for frameData in zip(*[iter(frame)]*input_size):
+    file.write('\n')
+    
+    first = True
+    for x,y,z,w in zip(*[iter(frameData)]*4):
+        if first:
+            file.write('{0} {1} {2} '.format(rootPos[i][0], rootPos[i][1], rootPos[i][2]))
+            first = False
+        else:
             quat = Quat(normalize((x,y,z,w)))
-            file.write('{0} {1} {2}'.format(quat.ra, quat.dec, quat.roll))
+            file.write('{0} {1} {2} '.format(quat.ra, quat.dec, quat.roll))
+    
+    i+=1
 
 file.close()
 
