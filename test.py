@@ -12,6 +12,7 @@ from numpy import array
 import numpy as np
 
 import math
+import sys
 
 def sigmoid(x):
   return 1 / (1 + math.exp(-x))
@@ -95,6 +96,8 @@ def processBVH(fullPath):
         
         return framesQData, rootPos
 
+#sys.stdout=open("outputww.txt","w")
+
 mypath = 'data/CMU/testing/'
 onlyfolders = [f for f in listdir(mypath) if not isfile(join(mypath, f))]
 
@@ -122,8 +125,6 @@ trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.sha
 
 input_size = len(trainingData[0])
 #encoding_dim = int(input_size*0.5) # compression of factor 20%, assuming the input is nn floats
-
-
 
 # this is our input placeholder
 input_frame = Input(shape=(input_size,))
@@ -202,3 +203,9 @@ file.close()
 #getFullFrame(file, test.root, 0)
 
 #exec(open("test.py").read())
+
+print("finished")
+#sys.stdout.close()
+print("finished")
+
+#print("finished")
