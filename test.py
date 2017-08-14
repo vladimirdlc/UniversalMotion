@@ -153,11 +153,16 @@ autoencoder.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 autoencoder.fit(trainingData, trainingData,
                 epochs=100,
                 batch_size=50,
-                shuffle=False,
+                shuffle=True,
                 validation_data=(trainingData, trainingData))
 
 #                validation_split=0.2)
 #model.fit(data, labels, validation_split=0.2)
+
+#trainingData = array(qdata[len(qdata)-3698:len(qdata)]).astype('float32')
+trainingData = array(qdata[0:3698]).astype('float32')
+
+trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
 
 decoded_quat = autoencoder.predict(trainingData)
 
@@ -170,6 +175,7 @@ file = open(mypath+'test.txt', 'w')
 
 #Denormalization
 #decoded_quat = (decoded_quat*2)-1
+
 
 i = 0
 for frameData in decoded_quat:
