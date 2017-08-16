@@ -63,6 +63,7 @@ def processBVH(fullPath):
 
         framesQData = []
         rootPos = []
+        rootRot = []
 
         for currentFrame in data:
             quaternionData = []
@@ -70,11 +71,15 @@ def processBVH(fullPath):
             #print(floats)
             
             first = True
+            second = True
             
             for x,y,z in zip(*[iter(floats)]*3):
                 if first:
                     rootPos.append((x,y,z))
                     first = False
+                elif second:
+                    rootRot.append((x,y,z))
+                    second = False
                 
                 quat = Quat((x,y,z))
                 #quaternionData.append(quat.q)
@@ -94,7 +99,7 @@ def processBVH(fullPath):
         #file.write("\n")
         file.close()
         
-        return framesQData, rootPos
+        return framesQData, rootPos, rootRot
 
 #sys.stdout=open("outputww.txt","w")
 
@@ -103,22 +108,24 @@ onlyfolders = [f for f in listdir(mypath) if not isfile(join(mypath, f))]
 
 qdata = []
 rootPos = []
+rootRot = []
 
 for folder in onlyfolders:
     onlyfiles = [f for f in listdir(mypath+folder) if isfile(join(mypath+folder, f))]
     for filename in onlyfiles:
-        qFrame, qRootPos = processBVH(mypath+folder+'/'+filename)
+        qFrame, qRootPos, qRootRot = processBVH(mypath+folder+'/'+filename)
         qdata.extend(qFrame)
         rootPos.extend(qRootPos)
+        rootRot.extend(qRootRot)
 
 dataSplitPoint = int(len(qdata)*0.2)
 
 trainingData = array(qdata).astype('float32')
-#trainingData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
-#validationData = array(qdata[0:dataSplitPoint]).astype('float32')
+validationData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
+trainingData = array(qdata[0:dataSplitPoint]).astype('float32')
 
 trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
-#validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
+validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
 
 #trainingData = trainingData.T
 #validationData = validationData.T
@@ -155,7 +162,7 @@ autoencoder.fit(trainingData, trainingData,
                 epochs=100,
                 batch_size=50,
                 shuffle=True,
-                validation_data=(trainingData, trainingData))
+                validation_data=(validationData, validationData))
 
 #                validation_split=0.2)
 #model.fit(data, labels, validation_split=0.2)
@@ -184,10 +191,15 @@ for frameData in decoded_quat:
     file.write('\n')
     
     first = True
+    second = True
+    
     for x,y,z,w in zip(*[iter(frameData)]*4):
         if first:
             file.write('{0} {1} {2} '.format(rootPos[i][0], rootPos[i][1], rootPos[i][2]))
             first = False
+        elif second:
+            file.write('{0} {1} {2} '.format(rootRot[i][0], rootRot[i][1], rootRot[i][2]))
+            second = False
         else:
             quat = Quat(normalize((x,y,z,w)))
             file.write('{0} {1} {2} '.format(quat.ra, quat.dec, quat.roll))
