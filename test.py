@@ -118,7 +118,7 @@ for folder in onlyfolders:
         rootPos.extend(qRootPos)
         rootRot.extend(qRootRot)
 
-dataSplitPoint = int(len(qdata)*0.2)
+dataSplitPoint = int(len(qdata)*0.8)
 
 trainingData = array(qdata).astype('float32')
 validationData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
@@ -138,7 +138,7 @@ input_frame = Input(shape=(input_size,))
 
 # "encoded" is the encoded representation of the input
 #encoded = Dense(encoding_dim, activation='relu')(input_frame)
-encoded = Dense(int(input_size-8), activation='tanh')(input_frame)
+encoded = Dense(int(88), activation='tanh')(input_frame)
 #encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
 #encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
 
@@ -216,7 +216,6 @@ file.close()
 
 #exec(open("test.py").read())
 
-print("finished")
 #sys.stdout.close()
 print("finished")
 
