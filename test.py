@@ -138,7 +138,7 @@ input_frame = Input(shape=(input_size,))
 
 # "encoded" is the encoded representation of the input
 #encoded = Dense(encoding_dim, activation='relu')(input_frame)
-encoded = Dense(int(35), activation='tanh')(input_frame)
+encoded = Dense(input_size-1, activation='tanh')(input_frame)
 #encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
 #encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
 
@@ -158,16 +158,15 @@ autoencoder.summary()
 # For a mean squared error regression problem
 autoencoder.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 
-autoencoder.load_weights('autoencoder_weights.h5')
+#autoencoder.load_weights('autoencoder_weights.h5')
 
-#autoencoder.fit(trainingData, trainingData,
-#                epochs=100,
-#                batch_size=50,
-#                shuffle=True,
-#                validation_data=(validationData, validationData))
+autoencoder.fit(trainingData, trainingData, verbose=1,
+                epochs=200,
+                batch_size=50,
+                shuffle=True,
+                validation_data=(validationData, validationData))
 
 #                validation_split=0.2)
-#model.fit(data, labels, validation_split=0.2)
 
 #trainingData = array(qdata[len(qdata)-3698:len(qdata)]).astype('float32')
 trainingData = array(qdata[0:3698]).astype('float32')
@@ -210,7 +209,7 @@ for frameData in decoded_quat:
 
 file.close()
 
-#autoencoder.save_weights('autoencoder_weights.h5')
+autoencoder.save_weights('autoencoder_weights.h5')
 #model.load_weights('autoencoder_weights.h5')
 
 #print(len(trainingData))
