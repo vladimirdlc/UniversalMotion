@@ -158,11 +158,13 @@ autoencoder.summary()
 # For a mean squared error regression problem
 autoencoder.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 
-autoencoder.fit(trainingData, trainingData,
-                epochs=100,
-                batch_size=50,
-                shuffle=True,
-                validation_data=(validationData, validationData))
+autoencoder.load_weights('autoencoder_weights.h5')
+
+#autoencoder.fit(trainingData, trainingData,
+#                epochs=100,
+#                batch_size=50,
+#                shuffle=True,
+#                validation_data=(validationData, validationData))
 
 #                validation_split=0.2)
 #model.fit(data, labels, validation_split=0.2)
@@ -197,9 +199,9 @@ for frameData in decoded_quat:
         if first:
             file.write('{0} {1} {2} '.format(rootPos[i][0], rootPos[i][1], rootPos[i][2]))
             first = False
-        #elif second:
-        #    file.write('{0} {1} {2} '.format(rootRot[i][0], rootRot[i][1], rootRot[i][2]))
-        #    second = False
+        elif second:
+            file.write('{0} {1} {2} '.format(rootRot[i][0], rootRot[i][1], rootRot[i][2]))
+            second = False
         else:
             quat = Quat(normalize((x,y,z,w)))
             file.write('{0} {1} {2} '.format(quat.ra, quat.dec, quat.roll))
@@ -208,8 +210,8 @@ for frameData in decoded_quat:
 
 file.close()
 
-autoencoder.save_weights('autoencoder_weights.h5')
-#model.load_weights('my_model_weights.h5')
+#autoencoder.save_weights('autoencoder_weights.h5')
+#model.load_weights('autoencoder_weights.h5')
 
 #print(len(trainingData))
 #print(len(validationData))
