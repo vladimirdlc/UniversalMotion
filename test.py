@@ -138,7 +138,7 @@ input_frame = Input(shape=(input_size,))
 
 # "encoded" is the encoded representation of the input
 #encoded = Dense(encoding_dim, activation='relu')(input_frame)
-encoded = Dense(int(88), activation='tanh')(input_frame)
+encoded = Dense(int(35), activation='tanh')(input_frame)
 #encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
 #encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
 
@@ -197,9 +197,9 @@ for frameData in decoded_quat:
         if first:
             file.write('{0} {1} {2} '.format(rootPos[i][0], rootPos[i][1], rootPos[i][2]))
             first = False
-        elif second:
-            file.write('{0} {1} {2} '.format(rootRot[i][0], rootRot[i][1], rootRot[i][2]))
-            second = False
+        #elif second:
+        #    file.write('{0} {1} {2} '.format(rootRot[i][0], rootRot[i][1], rootRot[i][2]))
+        #    second = False
         else:
             quat = Quat(normalize((x,y,z,w)))
             file.write('{0} {1} {2} '.format(quat.ra, quat.dec, quat.roll))
@@ -207,6 +207,9 @@ for frameData in decoded_quat:
     i+=1
 
 file.close()
+
+autoencoder.save_weights('autoencoder_weights.h5')
+#model.load_weights('my_model_weights.h5')
 
 #print(len(trainingData))
 #print(len(validationData))

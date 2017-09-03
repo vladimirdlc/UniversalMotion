@@ -1,12 +1,18 @@
-        READMEFIRST for Daz-friendly, hip-corrected release
-	v1.0, last update July 28, 2010 by B. Hahne
-	Web site: www.cgspeed.com (see the motion-capture section)
+        READMEFIRST v1.1, last update June 26, 2010 by B. Hahne
 
-This READMEFIRST file accompanies the primary Daz-friendly BVH
-conversion release of the Carnegie-Mellon University (CMU) Graphics
-Lab Motion Capture Database.  See "Where to find stuff" at the bottom
-of this file for where to get the BVH conversion and/or the original
-CMU dataset.
+This READMEFIRST file accompanies the second (2010)
+Motionbuilder-friendly BVH conversion release of the Carnegie-Mellon
+University (CMU) Graphics Lab Motion Capture Database.  See "Where to
+find stuff" at the bottom of this file for where to get the BVH
+conversion and/or the original CMU dataset.
+
+I released the original Motionbuilder-friendly BVH conversion in 2008.
+This 2010 release is very similar, but has a few minor adjustments to some
+of the joint rotations of the frame-one T pose which are intended to
+make retargeting look slightly better in most cases.  This 2010
+release doesn't touch any of the other frames and doesn't change the
+Motionbuilder-friendly joint naming convention of the 2008 release.
+In general, you'll probably want to use this 2010 release.
 
 The original CMU motion capture database isn't in BVH format - it's
 in ASF/AMC format.  This BVH conversion release was created by Bruce
@@ -15,134 +21,135 @@ available and easily usable by other animators.  I presently (2010)
 maintain the web site www.cgspeed.com, where this BVH conversion
 release is available within the motion capture section.
 
-This is the third major conversion in an occasional series of
-conversions of the CMU BVH data into various forms designed to be easy
-for hobbyists to use.  The history so far is: 
-  2008: First Motionbuilder-friendly release 
-  2009: 3dStudio Max biped-friendly release 
-  June 2010: Second (slightly improved) Motionbuilder-friendly release
-  July 2010: Daz-character-friendly release
-
-This release is a set of BVH files designed to work seamlessly with
-the 3rd-generation (gen3) and 4th-generation (gen4) prerigged
-characters from Daz (www.daz3d.com).  These characters include, for
-example:
-  Aiko3  Victoria3  David3  Michael3  SP3
-  Aiko4  Victoria4  SP4
-
-A video tutorial on how to use these BVH files with Daz Studio is
-available at cgspeed.com.
-
-I've spot-tested the BVH files from this Daz-friendly conversion in
-Daz Studio 3.  In theory they should also work with the Daz gen3 and
-gen4 characters within any release of Poser or Carrara, however as of
-July 2010 I haven't tested with either of these packages.
+The emphasis on this release is to produce BVH files that can rapidly
+be used in MotionBuilder for motion retargetting.  The files are not
+particularly Poser-friendly or DazStudio-friendly, due to
+incorrect assumptions that those programs have to make about the
+underlying joint rotation setup.  A conversion for use with Daz
+characters is in its early stages as of June 2010.
 
 
-This Daz-friendly release is derived from the 2010 (second)
-Motionbuilder-friendly release using the following workflow:
 
-1. I ran the Motionbuilder-friendly BVH files through a retargeting
-script in Motionbuilder, to retarget them onto the Aiko3 skeleton.
+ADVANTAGES OF THIS RELEASE OVER THE ORIGINAL CMU DATA:
+- This release has the motions in BVH format.
 
-2. I ran the resulting Aiko3-compatible BVH files through a
-hip-correction script to work around a sporadic Motionbuilder BVH
-export bug.  Motionbuilder 2009 occasionally saves bogus hip rotation
-values for some (but not all) frames of an animation when exporting in
-BVH format. (Motionbuilder 2011, presently in beta as of this writing,
-is much worse - it doesn't even export proper BVH files at all).  The
-workaround for this bug was to replace all hip rotation values with
-the original rotation values from the motionbuilder-friendly,
-pre-retargeting BVH files.
+- T-poses: Every BVH file has a T-pose added as its new first frame.
+  The T-poses face the positive Z axis and are therefore MotionBuilder
+  compatible.
 
-A version of the Daz-friendly BVH files WITHOUT the hip correction
-algorithm is also available at cgspeed.com, however that isn't what
-you've downloaded with this particular release.
+- Joint renaming: As many joints as possible have been renamed to be
+  compatible with MotionBuilder's joint naming conventions.  This renaming
+  makes it much easier (faster) to use the BVH files in MotionBuilder.
 
+- Index files: The release includes consolidated indexes that list
+  the motion filenames and their descriptions.  Both spreadsheet and 
+  word processor friendly index files are available.
 
-ADVANTAGES AND FEATURES OF THIS RELEASE:
-
-- The BVH files are entirely retargeted to the Daz gen3 and gen4
-  skeletons, and should import seamlessly onto these Daz characters
-  with no need to mess around with joint renaming or post-import
-  rotation corrections.  If you've struggled in the past to use BVH
-  files to animate Daz characters, you should give this dataset a try
-  or watch the training video - it's very fast to use this BVH release
-  with the Daz characters.
-
-- Unlike other attempts at releasing Poser-friendly or Daz-friendly
-  conversions of this dataset, this conversion has run the files
-  through an actual retargeting algorithm in Motionbuilder.  Other
-  attempts at Poser-friendly releases that I've seen contain massive
-  joint-snarl and rotation-snarl problems.  This release should avoid
-  most of these problems, since Motionbuilder did the heavy lifting.
-
-- Index files: As always, the release includes consolidated indices
-  that list the motion filenames and their descriptions.  Both
-  spreadsheet and word processor friendly index files are available.
-
-- This Daz-friendly release is based on the latest
-  Motionbuilder-friendly BVH release, which provides better leg and
-  neck rotation corrections than the 2008 release.  The result is that
-  when you animate Daz characters using this Daz-friendly release, you
-  typically don't get the problem of the character's head being bent
-  down at a severe angle.
-
-- Preserves the 120fps of the original CMU dataset - you get every
-  frame from the original capture (both the good and bad data...), not
-  a downsampled 30fps version.
+- MotionBuilder-friendly: the joint renaming and the addition of the
+  T-pose make it possible to use these motions for animation
+  retargetting within MotionBuilder in seconds rather than minutes.
 
 
-CAVEATS:
+COMPARISON OF THE 2008 AND 2010 MOTIONBUILDER-FRIENDLY RELEASES:
 
-- The original CMU motion capture data was recorded several years ago
-  in a non-profit academic environment by people who weren't necessary
-  experts at operating the motion capture system.  The data was never
-  cleaned and contains a wide variety of joint-flipping problems
-  characteristic of "dirty" motion capture data, when the Vicon
-  joint-tracking software makes an incorrect guess about how a joint
-  has actually rotated.  All releases of the CMU data preserve these
-  joint-flip problems in all of their (ugly) glory.  Typically the only
-  way to get rid of them is manually clean the data, which is of
-  course a time-consuming and tedious process.  Some of the capture
-  data is quite good, but other captures, particularly earlier in the
-  numeric series of directories, have a lot of joint-flip problems.
+The original CMU BVH files don't provide T poses, which means it's
+impossible to determine or recover the exact physical rotation of the
+human actor's joints when the motions were recorded.  The situation is
+made worse by the fact that the data is recorded using many different
+subjects, and was presumably captured over multiple days or weeks with
+different people operating and calibrating the motion capture
+equipment.  The best that we can do is make a guess at a T pose, using
+joint rotations that visually look like a T pose, but then adjusting
+empirically so that we end up with retargeted animation that avoids
+some of the most glaring flaws, such as elbows intersecting hips and
+feet intersecting each other.  This 2010 release modifies the original
+T pose slightly, based on my experiments with retargeting the CMU BVH
+data onto one of the Daz characters.
 
-- Because MotionBuilder 2009 has a hip rotation BVH export bug, I've
-  run this release of the Daz-friendly data through a hip-correction
-  script that, for the most part, does an excellent job of undoing
-  Motionbuilder's bug.  However, occasionally this script introduces
-  foot-slip / floor-contact problems - see for example animation
-  directory 144, file 144_05.bvh.  If you discover an animation in
-  this release that you don't like due to foot-slip problems, you
-  might want to take a look at the "Daz-friendly, hip-uncorrected" BVH
-  release, since I'm also releasing the full set of Daz-friendly BVH
-  files PRIOR to application of the hip-correction algorithm.  The
-  "hip-uncorrected" release is at cgspeed.com, as usual.
+For both the 2008 and 2010 Motionbuilder-friendly releases, the T pose
+that I've added is in frame 0.  All other frames are from the original
+CMU capture sessions.
 
-- This release provides 120fps BVH data, as do all of the BVH releases
-  I've done so far.  Generally you'll want to set your animation
-  software to 30fps (for NTSC), 25fps (for PAL), or 24fps (for film)
-  after you've done the BVH import, since these fps rates are what
-  most video-editing software will expect.
+- The 2008 release set the Z rotations of the upper arm joints
+  ("RightArm" and "LeftArm" in MotionBuilder's naming convention) to 5
+  degrees and -5 degrees respectively, to reduce problems with
+  retargeted animation bending the arms down too much.  In the 2010
+  release, I've changed these values to 8 and -8 degrees, which
+  increases the level of compensation slightly.
 
-- These BVH files are not designed to work with non-Daz characters
-  such as E-frontier / SmithMicro characters, Miki2, RuntimeDNA
-  characters, etc.  I also don't know if they'll work cleanly with
-  lesser-known Daz figures such as The Freak, The Girl, etc.
+- The 2008 release set the Z rotations of the upper leg joints
+  ("RightUpLeg" and "LeftUpLeg" in Motionbuilder's naming convention)
+  to 17 and -17 degrees respectively, to reduce problems with
+  retargeted animation bending the legs in towards each other too
+  much.  In the 2010 release, I've changed these values to 21 and -21
+  degrees, which increases the compensation slightly.
 
-- Since it's impossible to test 2600 different BVH files on a dozen
-  different Daz characters within 3 different applications (Daz
-  Studio, Carrara, Poser), there are plenty of combinations that might
-  give you "interesting" or undesired results.  However, work so far
-  within Daz Studio has given positive results.
+- The 2008 release set all neck and head joint rotations to zero,
+  which looks good visually within Motionbuilder but typically results
+  in characters who have their neck bent far forward when you
+  retarget.  The 2010 release uses non-zero X rotations on the neck
+  and head joints, in an effort to provide a T-pose for the head which
+  is probably closer to what the joint readings would have been when
+  the original motion capture actors looked straight ahead.  The
+  values in the 2010 release, for the Motionbuilder joints, are:
+  	 Neck:  X rotation = -16 degrees
+	 Neck1: X rotation = 21 degrees
+	 Head:  X rotation = 11 degrees
+  The net result of this compensation is to rotate the head up by
+  about 15 degrees in retargeted animation, compared to use of the
+  2008 BVH release.  However, for some of the BVH files you might find
+  that you need to tilt the head up even more than this.
 
-- Blender users: I have yet to see a successful import of a Daz
-  character into Blender, and Blender uses a "z axis up" world
-  coordinate system that makes life even more difficult miserable for
-  converting a variety of data, so please don't hold your breath
-  hoping that this Daz-friendly release will be usable in Blender any
-  time soon.
+
+CONVERSION PROCESS:
+
+- I started with the full set of AMC and ASF files, available from CMU
+  as a single .zip file
+- I ran the AMC/ASF files through amc2bvh in batch mode to produce BVH files.
+- I analyzed several of the BVH files in MotionBuilder to determine how
+  to set joint angles to set a T-pose.
+- I then ran the BVH files through a Python script that I wrote to do
+  joint naming conversion and T-pose generation.  This script is unreleased.
+- With the exception of the new frame 1 (the T-pose), there are no
+  modifications to the motion data itself.  If the original CMU data
+  is noisy, the conversion will be noisy.  If the original CMU data
+  has the actor's head moving at an impossible angle, the conversion
+  will do the same.
+
+
+CONVERSION NOTES:
+
+Shoulders: The CMU dataset's skeleton is somewhat annoying around the
+shoulders because it doesn't use a clavicle joint, only a shoulder
+joint.  Also, the rotation points of the CMU skeleton shoulders are
+significantly wider than the hips.  The result was that when I did
+some retargetting tests in MotionBuilder, I often found that the
+geometry of the target character's arms would punch through the hips.
+To somewhat mitigate this problem, I set the T-pose of this converted
+CMU dataset such that the arms angle slightly downwards, at 5 degrees
+down from the horizontal.  This adjustment helps to reduce the "arms
+through the hips" problem.
+
+
+Fingers:  CMU's main page says this about the dataset:
+
+  The "finger" and "thumb" joints are added to the skeleton for editing
+  convenience - we do not actually capture these joints' motions and any
+  such data should be ignored.
+
+Therefore in the BVH joint naming conversion, I've maintained the
+mapping "lfingers" to "LFingers" and "lthumb" to "LThumb", since these
+are names that MotionBuilder's character joint naming convention does
+NOT recognize.  We don't want MotionBuilder to try to use these joints,
+since they have no data on them.
+
+
+Playback speed: The CMU dataset was sampled at 120fps, however this
+information apparently isn't saved in the CMU-distributed AMC/ASF
+files, and the freeware utility amc2bvh simply assumes a default value
+of 30fps (Frame Time = .033333) when it writes out BVH files.  This
+BVH conversion release fixes the problem by rewriting Frame Time to
+.0083333 in each BVH file, which equates to 120fps.
 
 
 INDEX/INFORMATION FILES: 
@@ -176,14 +183,91 @@ Here's the relevant paragraph from mocap.cs.cmu.edu:
   from NSF EIA-0196217."
 
 
-AFFILIATION:  I (Bruce) am not affiliated with and don't speak for
-Carnegie-Mellon University, and they don't speak for me. :-)
+JOINT RENAMING TEMPLATE
 
+Here's the joint renaming template that my unreleased Python script 
+uses, with a variety of comments that come from my analysis of the skeleton.
+The left column is the original joint name used by the CMU dataset,
+and the right column is the joint name that my script outputs.  Most
+of the time this right-column name is one that MotionBuilder
+recognizes, however in some cases we have to intentionally convert to
+a name that MotionBuilder won't recognize, because we don't want
+MotionBuilder to use the joint when we characterize.
+
+---------------------------------------------------------------------
+# Some facts about the CMU skeleton:
+# lhipjoint and rhipjoint are in the same location as hip, and have no
+#   keyframes.
+#
+# lowerback is in the same location as hip, and has keyframes. MotionBuilder
+# docs say that Spine must NOT be in same location as hip, so we have to
+# throw out "lowerback" and not call it Spine.
+#
+# thorax, lowerneck, lclavicle, and rclavicle are all in the same location.
+# thorax and lowerneck are keyed.  lclavicle and rclavicle are not.
+#
+# Although we have two neck joints, the CMU "lowerneck" is really in
+# the middle of the spine -- it sure doesn't look anywhere close to
+# the human neck to me.  However when I tried calling it Spine2,
+# MB gave a warning: "Hierarchy warning: LeftShoulder is not the direct
+# descendant of Spine2, Spine1 was found".
+#
+# Per CMU web page: 'The "finger" and "thumb" joints are added to the
+# skeleton for editing convenience - we do not actually capture these
+# joints' motions and any such data should be ignored.'
+
+TEMPLATE: cmu
+hip                                     Hips
+
+# Not sure what to do with lhipjoint.  It has no keyframes and is
+# just a connector to attach the leg, so probably OK to rename it
+# in a way that MB won't use it.
+ lhipjoint                              LHipJoint  # Not used by MB
+  lfemur                                LeftUpLeg
+   ltibia                               LeftLeg
+    lfoot                               LeftFoot
+     ltoes                              LeftToeBase
+ rhipjoint                              RHipJoint
+   rfemur                               RightUpLeg
+    rtibia                              RightLeg
+     rfoot                              RightFoot
+      rtoes                             RightToeBase
+
+# We can't translate "lowerback" to Spine because lowerback is in
+# the same location as Hips.  The MB docs say that you shouldn't do
+# that.
+ lowerback                              LowerBack  # child of hips
+  upperback                             Spine
+   thorax                               Spine1
+
+# "Lower" and "upper" neck?  Good grief.
+    lowerneck                           Neck
+     upperneck                          Neck1
+      head                              Head
+    lclavicle                           LeftShoulder    # child of
+    thorax
+     lhumerus                           LeftArm
+      lradius                           LeftForeArm
+       lwrist                           LeftHand
+        lhand                           LeftFingerBase
+# LFingers and LThumb aren't names used by MB.  CMU notes that there's
+# no data on these joints, so we want to ignore them.
+         lfingers                       LFingers
+        lthumb                          LThumb  # child of lwrist
+    rclavicle                           RightShoulder # child of thorax
+     rhumerus                           RightArm
+      rradius                           RightForeArm
+       rwrist                           RightHand
+        rhand                           RightFingerBase
+         rfingers                       RFingers
+        rthumb                          RThumb  # child of rwrist
+
+# END OF CMU JOINT RENAMING TEMPLATE with comments
 -----------------------------------------------------------------
 
 
 CONTACT INFO AND WHERE TO FIND STUFF:
-  This BVH conversion release: www.cgspeed.com in the motion capture section.
+  This BVH conversion release: www.cgspeed.com in the motion capture section
   Original CMU database (not BVH): mocap.cs.cmu.edu
   AMC2BVH freeware utility: http://vipbase.net/amc2bvh/
   MotionBuilder: www.autodesk.com/motionbuilder
