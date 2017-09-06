@@ -139,10 +139,6 @@ input_frame = Input(shape=(input_size,))
 # "encoded" is the encoded representation of the input
 #encoded = Dense(encoding_dim, activation='relu')(input_frame)
 encoded = Dense(input_size-2, activation='tanh')(input_frame)
-encoded = Dense(input_size-4, activation='tanh')(encoded)
-encoded = Dense(input_size-6, activation='tanh')(encoded)
-encoded = Dense(input_size-4, activation='tanh')(encoded)
-encoded = Dense(input_size-2, activation='tanh')(encoded)
 
 #encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
 #encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
