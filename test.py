@@ -124,26 +124,28 @@ trainingData = array(qdata).astype('float32')
 validationData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
 trainingData = array(qdata[0:dataSplitPoint]).astype('float32')
 
+n = 10
+
 trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
 validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
 
 firstInputSize = len(trainingData[0])
 
 tdata2 = []
+for i in range(n, len(trainingData), n):
+    rangedData = array(trainingData[i-n:i]).astype('float32')
+    tdata2.append(rangedData.flatten())
 
-for g10array in zip(*[iter(trainingData)]*10):
-    flat_list = [item for sublist in g10array for item in sublist]
-    tdata2.append(flat_list)
-
-trainingData = tdata2
+trainingData =  array(tdata2)
 
 valdata2 = []
+for i in range(n, len(validationData), n):
+    rangedData = array(validationData[i-n:i]).astype('float32')
+    valdata2.append(rangedData.flatten())
 
-for g10array in zip(*[iter(validationData)]*10):
-    flat_list = [item for sublist in g10array for item in sublist]
-    valdata2.append(flat_list)
+validationData = array(valdata2)
 
-validationData = valdata2
+
     
 #trainingData = trainingData.T
 #validationData = validationData.T
@@ -188,15 +190,14 @@ autoencoder.fit(trainingData, trainingData, verbose=1,
 #trainingData = array(qdata[len(qdata)-3698:len(qdata)]).astype('float32')
 trainingData = array(qdata[0:3698]).astype('float32')
 
-trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
-
 tdata2 = []
+for i in range(n, len(trainingData), n):
+    rangedData = array(trainingData[i-n:i]).astype('float32')
+    tdata2.append(rangedData.flatten())
 
-for g10array in zip(*[iter(trainingData)]*10):
-    flat_list = [item for sublist in g10array for item in sublist]
-    tdata2.append(flat_list)
+trainingData =  array(tdata2)
 
-trainingData = tdata2
+
 
 decoded_quat = autoencoder.predict(trainingData)
 
@@ -206,7 +207,7 @@ for partition in decoded_quat:
         for g10array in zip(*[iter(partition)]*firstInputSize):
             decData.append(g10array)
 
-decoded_quat = decData
+decoded_quat = array(decData)
 
 file = open(mypath+'test.txt', 'w')
 
