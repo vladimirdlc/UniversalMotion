@@ -127,6 +127,24 @@ trainingData = array(qdata[0:dataSplitPoint]).astype('float32')
 trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
 validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
 
+firstInputSize = len(trainingData[0])
+
+tdata2 = []
+
+for g10array in zip(*[iter(trainingData)]*10):
+    flat_list = [item for sublist in g10array for item in sublist]
+    tdata2.append(flat_list)
+
+trainingData = tdata2
+
+valdata2 = []
+
+for g10array in zip(*[iter(validationData)]*10):
+    flat_list = [item for sublist in g10array for item in sublist]
+    valdata2.append(flat_list)
+
+validationData = valdata2
+    
 #trainingData = trainingData.T
 #validationData = validationData.T
 
@@ -159,21 +177,36 @@ autoencoder.summary()
 # For a mean squared error regression problem
 autoencoder.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 
-autoencoder.load_weights('autoencoder_weights.h5')
+#autoencoder.load_weights('autoencoder_weights.h5')
 
-#autoencoder.fit(trainingData, trainingData, verbose=1,
-#                epochs=200,
-#                batch_size=50,
-#                shuffle=True,
-#                validation_data=(validationData, validationData))
+autoencoder.fit(trainingData, trainingData, verbose=1,
+                epochs=200,
+                batch_size=50,
+                shuffle=True,
+                validation_data=(validationData, validationData))
 
 #trainingData = array(qdata[len(qdata)-3698:len(qdata)]).astype('float32')
 trainingData = array(qdata[0:3698]).astype('float32')
 
 trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
 
+tdata2 = []
+
+for g10array in zip(*[iter(trainingData)]*10):
+    flat_list = [item for sublist in g10array for item in sublist]
+    tdata2.append(flat_list)
+
+trainingData = tdata2
+
 decoded_quat = autoencoder.predict(trainingData)
 
+decData = []
+
+for partition in decoded_quat:
+        for g10array in zip(*[iter(partition)]*firstInputSize):
+            decData.append(g10array)
+
+decoded_quat = decData
 
 file = open(mypath+'test.txt', 'w')
 
@@ -213,7 +246,7 @@ for frameData in decoded_quat:
 
 file.close()
 #DO HALF OF ROTATION POSITION AVG TARGET WITH MODEL
-#autoencoder.save_weights('autoencoder_weights.h5')
+autoencoder.save_weights('autoencoder_weights.h5')
 
 #print(len(trainingData))
 #print(len(validationData))
