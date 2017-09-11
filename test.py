@@ -156,6 +156,16 @@ for i in range(n+5, len(trainingData), n):
     rangedData = array(trainingData[i-n:i]).astype('float32')
     tdata2.append(rangedData.flatten())
 
+for i in range(n+6, len(trainingData), n):
+    rangedData = array(trainingData[i-n:i]).astype('float32')
+    tdata2.append(rangedData.flatten())
+    
+
+for i in range(n+7, len(trainingData), n):
+    rangedData = array(trainingData[i-n:i]).astype('float32')
+    tdata2.append(rangedData.flatten())
+    
+
 trainingData =  array(tdata2)
 
 valdata2 = []
