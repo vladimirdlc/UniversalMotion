@@ -84,7 +84,7 @@ if debug:
     total_variation_weight = 10
     style_weight = 1.0
     content_weight = 0.025
-    iterations = 10
+    iterations = 1
 else:
     args = parser.parse_args()
     base_image_path = args.base_image_path
@@ -121,6 +121,8 @@ def deprocess_image(x):
     else:
         x = x.reshape((img_nrows, img_ncols, 3))
     # Remove zero-center by mean pixel
+    # Assume input data matrix X of size [N x D]
+    #x -= np.mean(x, axis = 0) # zero-center the data (important)
     x[:, :, 0] += 103.939
     x[:, :, 1] += 116.779
     x[:, :, 2] += 123.68
@@ -278,6 +280,9 @@ class Evaluator(object):
         self.grad_values = None
         return grad_values
 
+
+#exec(open("neural_style_transfer.py").read())
+        
 evaluator = Evaluator()
 
 # run scipy-based optimization (L-BFGS) over the pixels of the generated image
