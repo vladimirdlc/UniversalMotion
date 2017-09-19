@@ -76,16 +76,25 @@ parser.add_argument('--style_weight', type=float, default=1.0, required=False,
 parser.add_argument('--tv_weight', type=float, default=1.0, required=False,
                     help='Total Variation weight.')
 
-args = parser.parse_args()
-base_image_path = args.base_image_path
-style_reference_image_path = args.style_reference_image_path
-result_prefix = args.result_prefix
-iterations = args.iter
-
-# these are the weights of the different loss components
-total_variation_weight = args.tv_weight
-style_weight = args.style_weight
-content_weight = args.content_weight
+debug = True
+if debug:
+    base_image_path = 'img/tuebingen.jpg'
+    style_reference_image_path = 'img/starry_night.jpg'
+    result_prefix = 'results/my_result'
+    total_variation_weight = 10
+    style_weight = 1.0
+    content_weight = 0.025
+    iterations = 10
+else:
+    args = parser.parse_args()
+    base_image_path = args.base_image_path
+    style_reference_image_path = args.style_reference_image_path
+    result_prefix = args.result_prefix
+    iterations = args.iter
+    # these are the weights of the different loss components
+    total_variation_weight = args.tv_weight
+    style_weight = args.style_weight
+    content_weight = args.content_weight
 
 # dimensions of the generated picture.
 width, height = load_img(base_image_path).size
