@@ -14,6 +14,8 @@ import numpy as np
 import math
 import sys
 
+from itertools import islice
+
 def sigmoid(x):
   return 1 / (1 + math.exp(-x))
 
@@ -40,6 +42,17 @@ def getFullFrame(node, i, fullFrame=[]):
                 getFullFrame(child, i, fullFrame)
 
         return fullFrame
+        
+def window(seq, n=2):
+    "Returns a sliding window (of width n) over data from the iterable"
+    "   s -> (s0,s1,...s[n-1]), (s1,s2,...,sn), ...                   "
+    it = iter(seq)
+    result = tuple(islice(it, n))
+    if len(result) == n:
+        yield result
+    for elem in it:
+        result = result[1:] + (elem,)
+        yield result
         
 def processBVH(fullPath):
         #test = bvh.reader.BvhReader(mypath+onlyfiles[0])
@@ -83,10 +96,10 @@ def processBVH(fullPath):
                 
                 quat = Quat((x,y,z))
                 #quaternionData.append(quat.q)
-                if quat.q[3] < 0:
-                    quaternionData.append(-quat.q)
-                else:
-                    quaternionData.append(quat.q)
+                #if quat.q[3] < 0:
+                #    quaternionData.append(-quat.q)
+                #else:
+                quaternionData.append(quat.q)
 
                 #quaternionData.append((sigmoid(x),sigmoid(y),sigmoid(z))) #normalize the data, extend?
                 #quaternionData.append((x,y,z))
@@ -102,6 +115,11 @@ def processBVH(fullPath):
         return framesQData, rootPos, rootRot
 
 #sys.stdout=open("outputww.txt","w")
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 mypath = 'data/CMU/testing/'
 onlyfolders = [f for f in listdir(mypath) if not isfile(join(mypath, f))]
@@ -124,7 +142,7 @@ trainingData = array(qdata).astype('float32')
 validationData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
 trainingData = array(qdata[0:dataSplitPoint]).astype('float32')
 
-n = 10
+n = 10   
 
 trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
 validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
@@ -132,15 +150,15 @@ validationData = validationData.reshape((len(validationData), np.prod(validation
 firstInputSize = len(trainingData[0])
 
 tdata2 = []
-for i in range(n, len(trainingData), n):
-    rangedData = array(trainingData[i-n:i]).astype('float32')
+for subwindow in window(trainingData, n): #window
+    rangedData = array(subwindow).astype('float32')
     tdata2.append(rangedData.flatten())
 
 trainingData =  array(tdata2)
 
 valdata2 = []
-for i in range(n, len(validationData), n):
-    rangedData = array(validationData[i-n:i]).astype('float32')
+for subwindow in window(validationData, n):
+    rangedData = array(subwindow).astype('float32')
     valdata2.append(rangedData.flatten())
 
 validationData = array(valdata2)
@@ -188,11 +206,11 @@ autoencoder.fit(trainingData, trainingData, verbose=1,
                 validation_data=(validationData, validationData))
 
 #trainingData = array(qdata[len(qdata)-3698:len(qdata)]).astype('float32')
-trainingData = array(qdata[0:3698]).astype('float32')
+trainingData = array(qdata[0:3690]).astype('float32').flatten() #remember to put a multiple of 15
 
 tdata2 = []
-for i in range(n, len(trainingData), n):
-    rangedData = array(trainingData[i-n:i]).astype('float32')
+for toDecodeData in chunks(trainingData, n*firstInputSize):
+    rangedData = array(toDecodeData).astype('float32')
     tdata2.append(rangedData.flatten())
 
 trainingData =  array(tdata2)
