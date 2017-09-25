@@ -142,7 +142,7 @@ trainingData = array(qdata).astype('float32')
 validationData = array(qdata[dataSplitPoint:len(qdata)]).astype('float32')
 trainingData = array(qdata[0:dataSplitPoint]).astype('float32')
 
-n = 10   
+n = 2   
 
 trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
 validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
@@ -176,8 +176,11 @@ input_frame = Input(shape=(input_size,))
 
 # "encoded" is the encoded representation of the input
 #encoded = Dense(encoding_dim, activation='relu')(input_frame)
-encoded = Dense(input_size-2, activation='tanh')(input_frame)
-
+encoded = Dense(input_size-1, activation='tanh')(input_frame)
+encoded = Dense(input_size-2, activation='tanh')(encoded)
+encoded = Dense(input_size-3, activation='tanh')(encoded)
+encoded = Dense(input_size-2, activation='tanh')(encoded)
+encoded = Dense(input_size-1, activation='tanh')(input_frame)
 #encoded = Dense(int(input_size*0.6), activation='relu')(encoded)
 #encoded = Dense(int(input_size*0.5), activation='relu')(encoded)
 
