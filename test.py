@@ -16,6 +16,7 @@ import sys
 
 from itertools import islice
 
+
 def sigmoid(x):
   return 1 / (1 + math.exp(-x))
 
@@ -53,10 +54,12 @@ def window(seq, n=2):
     for elem in it:
         result = result[1:] + (elem,)
         yield result
-        
+
+
 def processBVH(fullPath):
         #test = bvh.reader.BvhReader(mypath+onlyfiles[0])
         #test.read();
+        
         print("Processing... "+fullPath)
         file = open(fullPath, 'r')
 
@@ -105,7 +108,7 @@ def processBVH(fullPath):
                 #quaternionData.append((x,y,z))
 
             framesQData.append(quaternionData)
-
+            
         #print(len(framesQData))
         #print(len(framesQData[0]))
         #writeFrame(file, test.root, 0)
@@ -128,13 +131,24 @@ qdata = []
 rootPos = []
 rootRot = []
 
+
+targetFrames = 25
+
+
 for folder in onlyfolders:
     onlyfiles = [f for f in listdir(mypath+folder) if isfile(join(mypath+folder, f))]
     for filename in onlyfiles:
+        currentFrameChunk = 0;
         qFrame, qRootPos, qRootRot = processBVH(mypath+folder+'/'+filename)
-        qdata.extend(qFrame)
-        rootPos.extend(qRootPos)
-        rootRot.extend(qRootRot)
+        
+        for subwindow in window(qFrame, targetFrames): #window
+            qdata.append(subwindow)
+            
+        for subwindow in window(qRootPos, targetFrames):
+            rootPos.append(subwindow)
+        
+        for subwindow in window(qRootRot, targetFrames):
+            rootRot.append(subwindow)
 
 dataSplitPoint = int(len(qdata)*0.8)
 
@@ -144,8 +158,13 @@ trainingData = array(qdata[0:dataSplitPoint]).astype('float32')
 
 n = 2
 
-trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
-validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
+
+#trainingData = trainingData.reshape((len(trainingData), np.prod(trainingData.shape[1:])))
+#validationData = validationData.reshape((len(validationData), np.prod(validationData.shape[1:])))
+
+
+#s[0]
+#trainingData.shape
 
 firstInputSize = len(trainingData[0])
 
