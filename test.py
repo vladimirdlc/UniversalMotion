@@ -7,7 +7,7 @@ from os import listdir
 from os.path import isfile, join
 
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Conv1D, Dropout, MaxPooling1D, UpSampling1D
-from keras.models import Model, Sequential
+from keras.models import Model, Sequential, model_from_json
 from numpy import array
 import numpy as np
 
@@ -191,7 +191,7 @@ validationData = array(valdata2)
 input_size = len(trainingData[0])
 #encoding_dim = int(input_size*0.5) # compression of factor 20%, assuming the input is nn floats
 
-'''
+
 
 X = np.load('data_rotation_full_cmu.npz')['clips']
 
@@ -239,6 +239,11 @@ network.summary()
 # For a mean squared error regression problem
 network.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 
+model_json = network.to_json()
+with open("network.json", "w") as json_file:
+    json_file.write(model_json)
+
+
 print(trainingData.shape)
 print(validationData.shape)
 network.fit(trainingData, trainingData, verbose=1,
@@ -248,6 +253,16 @@ network.fit(trainingData, trainingData, verbose=1,
                 validation_data=(validationData, validationData))
 
 network.save_weights('autoencoder_weights.h5')
+'''
+
+# load json and create model
+json_file = open('network.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+network = model_from_json(loaded_model_json)
+# load weights into new model
+network.load_weights("autoencoder_weights.h5")
+print("Loaded model from disk")
 
 #trainingData = array(qdata[len(qdata)-3698:len(qdata)]).astype('float32')
 trainingData = array(qdata[0:3690]).astype('float32').flatten() #remember to put a multiple of 15
