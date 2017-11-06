@@ -9,6 +9,9 @@ from keras.models import Model, Sequential, model_from_json
 from numpy import array
 import numpy as np
 
+from Quaternions import Quaternions
+
+
 
 import math
 from math import radians, degrees
@@ -16,190 +19,54 @@ import sys
 
 from itertools import islice
 
-def window(seq, n=2):
-    "Returns a sliding window (of width n) over data from the iterable"
-    "   s -> (s0,s1,...s[n-1]), (s1,s2,...,sn), ...                   "
-    it = iter(seq)
-    result = tuple(islice(it, n))
-    if len(result) == n:
-        yield result
-    for elem in it:
-        result = result[1:] + (elem,)
-        yield result
+X = np.load('data_rotation_full_cmu.npz')['clips']
 
-def processBVH(fullPath):
-        print("Processing... "+fullPath)
-        file = open(fullPath, 'r')
+print(X.shape)
 
-        data = []
-        frameDataStart = False
+X = X.reshape(X.shape[0], X.shape[1], X.shape[2]*X.shape[3])
 
-        for line in file:
-            line = line.strip()
-            if not line: continue
+qdata = array(X)
+X = None
 
-            if line.startswith('Frame '):
-                frameDataStart = True
-                continue
+dataSplitPoint = int(len(qdata)*0.8)
 
-            if frameDataStart:
-                data.append(line)
 
-        framesQData = []
-        rootPos = []
-        rootRot = []
+trainingData = array(qdata[0:dataSplitPoint])
+validationData = array(qdata[dataSplitPoint:len(qdata)])
 
-        for currentFrame in data:
-            quaternionData = []
-            floats = [float(x) for x in currentFrame.split()]
-            
-            first = True
-            second = True
-            
-            for x,y,z in zip(*[iter(floats)]*3):
-                if first:
-                    rootPos.append((x,y,z))
-                    first = False
-                elif second:
-                    rootRot.append((x,y,z))
-                    second = False
-                else:
-                    quat = Quat((x,y,z))
 
-                    if quat.q[3] < 0:
-                        quaternionData.append(-quat.q)
-                    else:
-                        quaternionData.append(quat.q)
+network = Sequential()
+degreesOFreedom = trainingData.shape[1] #joints * degreees of freedom
+windowSize = trainingData.shape[2] #temporal window 240 frames
+network.add(Dropout(0.25, input_shape=(degreesOFreedom, windowSize)))
 
-            framesQData.append(quaternionData)
+kernel_size = 25
+network.add(Conv1D(256, kernel_size, use_bias=True, activation='tanh', padding='same'))
+network.add(MaxPooling1D(padding='same'))
 
-        file.close()
-        
-        return framesQData, rootPos, rootRot
+network.add(Dropout(0.25))
 
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
+network.add(Conv1D(windowSize, kernel_size, use_bias=True, activation='tanh', padding='same'))
 
-def writeDecodedToFile(decodedArray, file, file2):
-    i = 0
-    print("writing to file")
-    sizeDecoded = len(decodedArray)
-    
-    for windowData in decodedArray:
-        i += 1
-        print("{} of {} ".format(i,sizeDecoded))
+network.add(UpSampling1D(size=2))
 
-        for frame in windowData:
-            file.write('\n')
-            file2.write('\n')
-            
-            first = True
-            for x,y,z,w in zip(*[iter(frame)]*4):
-                if first:
-                     file.write('{0} {1} {2} {3} {4} {5} '.format(0, 0, 0, 0, 0, 0))
-                     first = False
+network.summary()
 
-                quat = Quat((x,y,z, w))
-                file.write('{0} {1} {2} '.format(quat.ra, quat.dec, quat.roll))
+
+# load weights into new model
+#network.load_weights("autoencoder_weights.h5")
+#print("Loaded model from disk")
+
+network.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+
+print(trainingData.shape)
+print(validationData.shape)
+network.fit(trainingData, trainingData, verbose=2,
+                epochs=200,
+                batch_size=1000,
+                shuffle=True,
+                validation_data=(validationData, validationData))
                 
-                file2.write('{0} {1} {2} {3} '.format(x, y, z, w))
+network.save_weights('autoencoder_weights.h5')
 
-
-mypath = 'data/CMU/testing/'
-onlyfolders = [f for f in listdir(mypath) if not isfile(join(mypath, f))]
-
-qdata = []
-rootPos = []
-rootRot = []
-
-targetFrames = 25
-
-for folder in onlyfolders:
-    onlyfiles = [f for f in listdir(mypath+folder) if isfile(join(mypath+folder, f))]
-    k = 0
-    for filename in onlyfiles:
-
-
-        qFrame, qRootPos, qRootRot = processBVH(mypath+folder+'/'+filename)
-        
-        qdata.append(array(qFrame))
-        k += 1;
-        
-        if k == 8:
-            qdata = array(qdata)
-            dataSplitPoint = int(len(qdata)*0.8)
-            n = 64
-
-            trainingData = array(qdata[0:dataSplitPoint])
-            validationData = array(qdata[dataSplitPoint:len(qdata)])
-            print(trainingData.shape)
-            print("start windowing")
-
-            tdata2 = []
-            for animation in trainingData:
-                for subwindow in window(animation, n):
-                    rangedData = array(subwindow).astype('float32')
-                    tdata2.append(rangedData)
-                    
-            trainingData =  array(tdata2)
-
-            valdata2 = []
-            for animation in validationData:
-                for subwindow in window(animation, n):
-                    rangedData = array(subwindow).astype('float32')
-                    valdata2.append(rangedData)
-
-            validationData = array(valdata2)
-
-            print("done windowing")
-            originalShape = trainingData.shape
-            print(originalShape)
-            trainingData = trainingData.reshape(originalShape[0], originalShape[1], originalShape[2]*originalShape[3])
-
-            validationData = validationData.reshape(validationData.shape[0], originalShape[1], originalShape[2]*originalShape[3])
-
-            print(trainingData.shape)
-
-            network = Sequential()
-            degreesOFreedom = trainingData.shape[1] #joints * degreees of freedom
-            windowSize = trainingData.shape[2] #temporal window 240 frames
-            network.add(Dropout(0.25, input_shape=(degreesOFreedom, windowSize)))
-
-            kernel_size = 16
-            network.add(Conv1D(128, kernel_size, use_bias=True, activation='tanh', padding='same'))
-            network.add(MaxPooling1D(padding='same'))
-            
-            network.add(Dropout(0.25))
-
-            network.add(Conv1D(windowSize, kernel_size, use_bias=True, activation='tanh', padding='same'))
-
-            network.add(UpSampling1D(size=2))
-
-            network.summary()
-
-            # load weights into new model
-            network.load_weights("autoencoder_weights.h5")
-            print("Loaded model from disk")
-
-            network.compile(optimizer='adamax', loss='mse', metrics=['accuracy'])
-
-
-            print(trainingData.shape)
-            print(validationData.shape)
-            network.fit(trainingData, trainingData, verbose=2,
-                            epochs=200,
-                            batch_size=1000,
-                            shuffle=True,
-                            validation_data=(validationData, validationData))
-                            
-            network.save_weights('autoencoder_weights.h5')
-
-            print("finished")
-            qdata = []
-            trainingData = []
-            validationData = []
-            k = 0
-            
 print("finished")
