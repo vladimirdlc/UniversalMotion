@@ -21,7 +21,7 @@ import sys
 
 from itertools import islice
 
-version = "t2"
+version = "tq2"
 fileChanged = "cmu_rotations_full_cmu_30_nonchanged"
 
 X = np.load(fileChanged+".npz")['clips']
@@ -42,13 +42,15 @@ network = Sequential()
 degreesOFreedom = trainingData.shape[2] #joints * degreees of freedom
 windowSize = trainingData.shape[1] #temporal window 240 frames
 
-
 kernel_size = 20 #15m
 
 network.add(BatchNormalization(input_shape=(windowSize, degreesOFreedom)))
 
+network.add(Dropout())
 network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same', strides=2))
 network.add(BatchNormalization())
+
+network.add(Dropout(0.2))
 network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same', strides=2))
 network.add(BatchNormalization())
 
@@ -60,11 +62,13 @@ network.add(BatchNormalization())
 
 network.add(UpSampling1D(size=2))
 
+network.add(Dropout(0.2))
 network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same'))
 network.add(BatchNormalization())
 
 network.add(UpSampling1D(size=2))
 
+network.add(Dropout(0.2))
 network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='linear', padding='same'))
 
 network.summary()
@@ -90,4 +94,3 @@ print("MSE I/O NN:")
 print(np.square(np.subtract(trainingData, decoded_quat)).mean())
 
 print(fileChanged)
-print("finished")
