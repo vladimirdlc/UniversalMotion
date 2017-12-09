@@ -43,44 +43,45 @@ degreesOFreedom = trainingData.shape[2] #joints * degreees of freedom
 windowSize = trainingData.shape[1] #temporal window 240 frames
 
 kernel_size = 20 #15m
+dropoutAmount = 0.05
 
 network.add(BatchNormalization(input_shape=(windowSize, degreesOFreedom)))
 
-network.add(Dropout())
+network.add(Dropout(dropoutAmount))
 network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same', strides=2))
 network.add(BatchNormalization())
 
-network.add(Dropout(0.2))
+network.add(Dropout(dropoutAmount))
 network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same', strides=2))
 network.add(BatchNormalization())
 
 hiddenUnits = 512
 network.add(Dense(hiddenUnits))
-network.add(Dropout(0.2))
+network.add(Dropout(dropoutAmount))
 network.add(Activation('relu'))
 network.add(BatchNormalization())
 
 network.add(UpSampling1D(size=2))
 
-network.add(Dropout(0.2))
+network.add(Dropout(dropoutAmount))
 network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same'))
 network.add(BatchNormalization())
 
 network.add(UpSampling1D(size=2))
 
-network.add(Dropout(0.2))
+network.add(Dropout(dropoutAmount))
 network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='linear', padding='same'))
 
 network.summary()
 
-network.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+network.compile(optimizer='adam', loss='mse')
 
 #network.load_weights('{}_k{}_hu{}_weights.h5'.format(fileChanged,kernel_size,hiddenUnits))
 
 print(trainingData.shape)
 print(validationData.shape)
 network.fit(trainingData, trainingData, verbose=2,
-                epochs=50,
+                epochs=200,
                 batch_size=200,
                 shuffle=True,
                 validation_data=(validationData, validationData))
@@ -94,3 +95,4 @@ print("MSE I/O NN:")
 print(np.square(np.subtract(trainingData, decoded_quat)).mean())
 
 print(fileChanged)
+print("finished minos intro bactnorm")
