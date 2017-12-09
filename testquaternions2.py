@@ -33,7 +33,9 @@ X = X.reshape(X.shape[0], X.shape[1], X.shape[2]*X.shape[3])
 qdata = array(X)
 X = None
 
+#so we're able to reproduce the results
 np.random.seed(0)
+
 # split into 80% for train and 20% for test
 trainingData, validationData = train_test_split(qdata, test_size=0.20) #shuffle=False
 
@@ -42,7 +44,7 @@ network = Sequential()
 degreesOFreedom = trainingData.shape[2] #joints * degreees of freedom
 windowSize = trainingData.shape[1] #temporal window 240 frames
 
-kernel_size = 20 #15m
+kernel_size = 20
 dropoutAmount = 0.05
 
 network.add(BatchNormalization(input_shape=(windowSize, degreesOFreedom)))
@@ -95,4 +97,4 @@ print("MSE I/O NN:")
 print(np.square(np.subtract(trainingData, decoded_quat)).mean())
 
 print(fileChanged)
-print("finished minos intro bactnorm")
+print("finished")
