@@ -1,3 +1,4 @@
+import logging
 from os import listdir
 from os.path import isfile, join
 
@@ -7,8 +8,6 @@ from sklearn.model_selection import train_test_split
 from numpy import array
 import numpy as np
 
-from keras.layers.normalization import BatchNormalization
-from keras.optimizers import SGD
 from keras import regularizers
 
 from Quaternions import Quaternions
@@ -34,8 +33,11 @@ X = None
 
 np.random.seed(0)
 # split into 80% for train and 20% for test
-trainingData, validationData = train_test_split(qdata, test_size=0.2)
+#trainingData, validationData = train_test_split(qdata, test_size=0.2)
+dataSplitPoint = int(len(qdata)*0.2)
 
+validationData = array(qdata[0:dataSplitPoint])
+trainingData = array(qdata[dataSplitPoint:-1])
 
 network = Sequential()
 degreesOFreedom = trainingData.shape[2] #joints * degreees of freedom
@@ -44,34 +46,7 @@ windowSize = trainingData.shape[1] #temporal window 240 frames
 kernel_size = 15
 dropoutAmount = 0.25
 hiddenUnits = 512
-"""
-#network.add(BatchNormalization(input_shape=(windowSize, degreesOFreedom)))
 
-network.add(Dropout(dropoutAmount, input_shape=(windowSize, degreesOFreedom)))
-network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same', strides=2))
-#network.add(BatchNormalization())
-
-#network.add(Dropout(dropoutAmount))
-#network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same', strides=2))
-#network.add(BatchNormalization())
-
-#hiddenUnits = 512
-#network.add(Dense(hiddenUnits))
-network.add(Dropout(dropoutAmount))
-network.add(Activation('relu'))
-#network.add(BatchNormalization())
-
-network.add(UpSampling1D(size=2))
-
-network.add(Dropout(dropoutAmount))
-network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='relu', padding='same'))
-#network.add(BatchNormalization())
-
-network.add(UpSampling1D(size=2))
-
-network.add(Dropout(dropoutAmount))
-network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True, activation='linear', padding='same'))
-"""
 network.add(Dropout(dropoutAmount, input_shape=(windowSize, degreesOFreedom)))
 network.add(Conv1D(hiddenUnits, kernel_size, activation='sigmoid', use_bias=True, padding='same'))
 
@@ -81,28 +56,34 @@ network.add(Conv1D(degreesOFreedom, kernel_size, activation='linear', use_bias=T
 network.summary()
 
 
-epochs = 1000
-
-'''
-learning_rate = 0.01
-decay_rate = learning_rate / epochs
-momentum = 0.8
-sgd = SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=False)
-'''
+epochs = 300
 
 network.compile(optimizer='adam', loss='mse')
 
-network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e100_d0.25_weigths.h5')
+batch_size = 1
+#network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e100_d0.25_weigths.h5')!
 
 print(trainingData.shape)
 print(validationData.shape)
-network.fit(trainingData, trainingData, verbose=2,
+history_callback = network.fit(trainingData, trainingData, verbose=2,
                 epochs=epochs,
-                batch_size=16,
+                batch_size=batch_size,
                 validation_data=(validationData, validationData))
 
-network.save_weights('{}_k{}_hu{}_v{}_e{}_d{}_weigths.h5'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount))
-network.save('{}_k{}_hu{}_v{}_e{}_d{}_model.h5'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount))
+idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)
+
+loss_history = history_callback.history["loss"]
+val_loss_history = history_callback.history["val_loss"]
+
+numpy_loss_history = np.array(loss_history)
+np.savetxt('{}_lossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=",")
+
+numpy_loss_history = np.array(val_loss_history)
+np.savetxt('{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=",")
+
+
+network.save_weights('{}_weigths.h5'.format(idPrefix))
+network.save_weights('{}_model.h5'.format(idPrefix))
 
 decoded_quat = array(network.predict(trainingData))
 
