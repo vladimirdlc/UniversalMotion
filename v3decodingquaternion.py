@@ -103,20 +103,22 @@ print(qdata.shape)
 
 X = None
 
-dataSplitPoint = int(len(qdata)*0.8)
+dataSplitPoint = int(len(qdata)*0.2)
 
-#trainingData = array(qdata[0:dataSplitPoint])
+trainingData = array(qdata[dataSplitPoint:-1])
 #validationData = array(qdata[dataSplitPoint:len(qdata)])
-trainingData = qdata
+np.random.seed(0)
+# split into 80% for train and 20% for test
+#trainingData, validationData = train_test_split(qdata, test_size=0.2)
 
 
-network = load_model('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e100_d0.25_model.h5')
+network = load_model('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e300_d0.25_weigths.h5_model.h5')
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e100_d0.25_weigths.h5')
+network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e300_d0.25_weigths.h5_weigths.h5')
 
 print('decoding...')
 

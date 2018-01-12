@@ -87,7 +87,7 @@ def chunks(l, n):
         yield l[i:i + n]
 
 print('processing...')
-npzFile = 'cmu_rotations_full_cmu_31_normalfps_2samples.npz'
+npzFile = 'cmu_rotations_full_cmu_30_w240_standardized_scaled10000.npz'
 X = np.load(npzFile)['clips']
 mean = np.load(npzFile)['mean']
 std = np.load(npzFile)['std']
@@ -111,14 +111,14 @@ X = None
 #validationData = array(qdata[dataSplitPoint:len(qdata)])
 trainingData = qdata
 
-network = load_model('cmu_rotations_full_cmu_31_normalfps_2samples_k15_hu2048_vtq2_e200_model.h5')
+network = load_model('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e300_d0.25_weigths.h5_model.h5')
 
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('cmu_rotations_full_cmu_31_normalfps_2samples_k15_hu2048_vtq2_e200_weigths.h5')
+network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e300_d0.25_weigths.h5_weigths.h5')
 
 print('decoding...')
 
