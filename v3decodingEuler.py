@@ -4,7 +4,6 @@ from os.path import isfile, join
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Conv1D, Dropout, MaxPooling1D, UpSampling1D, BatchNormalization, Activation
 from keras.models import Model, Sequential, model_from_json, load_model
 from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
 
 from numpy import array
 import numpy as np
@@ -88,9 +87,8 @@ def chunks(l, n):
         yield l[i:i + n]
 
 print('processing...')
-fileToDecode = 'cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000.npz' #'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
 
-np.set_printoptions(suppress=True)
+fileToDecode = 'data_rotation_cmu_Euler_2samples_j30_ws120_standardized_scaled10.npz'
 
 X = np.load(fileToDecode)['clips']
 mean = np.load(fileToDecode)['mean']
@@ -106,21 +104,20 @@ print(qdata.shape)
 
 X = None
 
-dataSplitPoint = int(len(qdata)*0.2)
+dataSplitPoint = int(len(qdata)*0.8)
 
-#trainingData = array(qdata[dataSplitPoint:-1])
+#trainingData = array(qdata[0:dataSplitPoint])
 #validationData = array(qdata[dataSplitPoint:len(qdata)])
-np.random.seed(0)
-# split into 80% for train and 20% for tests
 trainingData = qdata
 
-network = load_model('cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_model.h5')
+network = load_model('data_rotation_cmu_Euler_2samples_j30_ws120_standardized_scaled10_k15_hu256_vtq2_e1200_d0.15_bz16_valtest0.2_model.h5')
+
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_weigths.h5')
+network.load_weights('data_rotation_cmu_Euler_2samples_j30_ws120_standardized_scaled10_k15_hu256_vtq2_e1200_d0.15_bz16_valtest0.2_weigths.h5')
 
 print('decoding...')
 
@@ -140,8 +137,8 @@ rootPos, rootRot, localsRot = extractBVHGlobals(mypath+folder+'/'+filename)
 
 anim, names, frametime = BVH.load(mypath+folder+'/'+filename, order='zyx', world=False)
 
-""" Convert to 60 fps """
-#anim = anim[::2]
+""" Convert to 60 fps (if using 60fps version) """
+anim = anim[::2]
 BVH.save("original.bvh", anim)
 
 
@@ -181,41 +178,36 @@ print(anim.rotations.shape)
 rotationsA = rotationsA.reshape(rotationsA.shape[0], rotationsA.shape[1]*rotationsA.shape[2])[0:trainingData[0].shape[0]]
 reformatRotationsEuler = reformatRotationsEuler.reshape(reformatRotationsEuler.shape[0], reformatRotationsEuler.shape[1]*reformatRotationsEuler.shape[2])[0:trainingData[0].shape[0]]
 print(rotations.shape)
-#print(">A-R:")
-#print(np.square(mse(trainingData[0], rotationsA)))
+print(">A-R:")
+print(np.square(mse(trainingData[0], reformatRotationsEuler)))
 
 #print(">B-R:")
-#print(np.square(mse(decoded_quat[0], rotationsA)))
-#print(decoded_quat[0].shape)
-#print(rotationsA.shape)
-
-decoded_quat = ((decoded_quat*std)+mean)
-
+#print(np.square(mse(decoded_quat[0], reformatRotations)))
+print(decoded_quat[0].shape)
+print(rotationsA.shape)
 flatDecoded = decoded_quat.flatten()
 
-decodedlistNorm = []
+decodedlist = []
 
-for frame in decoded_quat[0]:
+#originalQIn = (((trainingData[0]*std)+mean)/10)
+decodedEulers = ((decoded_quat[0]*std)+mean)
+
+for frame in decodedEulers:
     frameList = []
-    for joint in chunks(frame, 4):
-        decodedj = normalize(joint*scale)
-        frameList.extend(decodedj)
+    for joint in chunks(frame, 3):
+        #decodedj = normalize(joint)
+        frameList.extend(joint)
         #print(decodedj)
         #print(np.linalg.norm(decodedj))
         #input("press key ")
-    decodedlistNorm.append(frameList)
+    decodedlist.append(frameList)
 
-decodedlistNorm = array(decodedlistNorm)
+decodedlist = array(decodedlist)
 
-print(">Diff dec[0] and Norm(B)")
-print(np.square(mse(decodedlistNorm, decoded_quat[0])))
-
-#print(">Norma(B)-R:")
-#print(np.square(mse(decodedlistNorm, rotationsA)))
+print(">Decoded - RotationsEuler:")
+print(np.square(mse(decodedlist, reformatRotationsEuler)))
 
 np.savetxt('QIn.txt', trainingData[0], delimiter=' ') 
-np.savetxt('QHat.txt', decoded_quat[0], delimiter=' ')
-np.savetxt('QBar.txt', decodedlistNorm, delimiter=' ')  
 #np.savetxt('ScaledIn.txt', trainingData[0], delimiter=' ') 
 
 #decoding
@@ -226,11 +218,11 @@ fullParsedEuler = []
 
 idx = 0
 
-decodedlistNorm = array(decodedlistNorm)
+decodedlist = array(decodedlist)
 
 outputList = []
 
-for frame in decodedlistNorm:
+for frame in decodedlist:
     if idx != 0:
         file.write('\n')
     
@@ -239,20 +231,23 @@ for frame in decodedlistNorm:
     
     frameLine = []
     
-    for joint in chunks(frame, 4):
+    for joint in chunks(frame, 3):
         if first:
             file.write('{0} {1} {2} '.format(rootPos[idx][0], rootPos[idx][1], rootPos[idx][2]))
             file.write('{0} {1} {2} '.format(rootRot[idx][0], rootRot[idx][1], rootRot[idx][2]))
             #frameLine.append(rootRot[idx])
             first = False
             
-        quateu = np.degrees(Quaternions(joint).euler().ravel())
+        
+        quateu = np.degrees(np.array(joint))
+        #quateu = np.degrees(Quaternions.from_euler(np.array(joint)).euler().ravel())
         frameLine.append(quateu)
         
-        file.write('{0} {1} {2} '.format(quateu[2], quateu[1], quateu[0]))
+        file.write('{0} {1} {2} '.format(quateu[0], quateu[1], quateu[2])) #zyx
         
         #if j in rangedRotations:
-        anim.rotations[idx][j] = Quaternions(joint)
+        #if j != 0:
+        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
         
         outputList.append(frameLine)
         j+=1
@@ -284,8 +279,8 @@ arrayOut = []
 with open(fileName) as file:
     arrayOut = [[float(digit) for digit in line.split()[5:-1]] for line in file] #3:-1 remove position
 
-#print(">Manual-R:")
-#print(np.square(mse(arrayOut[:][:], reformatRotationsEuler)))
+print(">Manual-R:")
+print(np.square(mse(arrayOut[:][:], reformatRotationsEuler)))
 
 
 #qManualOut = np.fromfile(fileName, dtype="float")
