@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import scipy.io as io
 import scipy.ndimage.filters as filters
-import eulerangles as eang
+
 sys.path.append('../../motion')
 import BVH as BVH
 import Animation as Animation
@@ -11,17 +11,7 @@ from Quaternions import Quaternions
 from Pivots import Pivots
 from itertools import islice
 
-def slidingWindow(seq, n=2):
-    "Returns a sliding window (of width n) over data from the iterable"
-    "   s -> (s0,s1,...s[n-1]), (s1,s2,...,sn), ...                   "
-    it = iter(seq)
-    result = tuple(islice(it, n))
-    if len(result) == n:
-        yield result
-    for elem in it:
-        result = result[1:] + (elem,)
-        yield result
-        
+
 import heapq
 """ hdm05 """
 class_map = {
@@ -502,7 +492,7 @@ def get_files(directory):
     if os.path.isfile(os.path.join(directory,f))
     and f.endswith('.bvh') and f != 'rest.bvh'] 
 
-MSEConvertAndBackTest()
+#MSEConvertAndBackTest()
 
 cmu_files = get_files('cmu')
 
