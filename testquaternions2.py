@@ -6,6 +6,8 @@ from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Conv1
 from keras.models import Model, Sequential, model_from_json
 from sklearn.model_selection import train_test_split
 from numpy import array
+from plotCallback import PlotLoss
+
 import numpy as np
 
 import math
@@ -22,7 +24,7 @@ np.set_printoptions(suppress=True)
 np.random.seed(0)
 
 version = "tq2"
-fileChanged = "cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000"
+fileChanged = "cmu_rotations_2samples_cmu_30_standardized_w240_ws120_normalfps_scaled1000"
 
 print('started processing {}', fileChanged)
 X = np.load(fileChanged+".npz")['clips']
@@ -74,24 +76,27 @@ network.compile(optimizer='adam', loss='mse')
 batch_size = 16
 #network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
+idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)
+
+plot_losses = PlotLoss(epochs, 'results/'+idPrefix)
+
 print(trainingData.shape)
 #print(validationData.shape)
 history_callback = network.fit(trainingData, trainingData, verbose=2,
                 epochs=epochs,
                 batch_size=batch_size,
+                callbacks=[plot_losses],
                 validation_data=(validationData, validationData))
-
-idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)
-
+                
 print('hu{}'.format(hiddenUnits))
 loss_history = history_callback.history["loss"]
 val_loss_history = history_callback.history["val_loss"]
 
 numpy_loss_history = np.array(loss_history)
-np.savetxt('{}_lossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
+np.savetxt('results/{}_lossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
 
 numpy_loss_history = np.array(val_loss_history)
-np.savetxt('{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
+np.savetxt('results/{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
 
 
 network.save_weights('{}_weigths.h5'.format(idPrefix))
