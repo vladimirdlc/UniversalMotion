@@ -18,13 +18,11 @@ import sys
 
 from itertools import islice
 
-sys.path.append('../../motion')
+sys.path.insert(0, './motion')
 
 import BVH as BVH
 import Animation as Animation
 from Quaternions import Quaternions
-from Pivots import Pivots
-
 
 def extractBVHGlobals(fullPath):
     print("Processing... "+fullPath)
@@ -213,9 +211,9 @@ print(np.square(mse(decodedlistNorm, decoded_quat[0])))
 #print(">Norma(B)-R:")
 #print(np.square(mse(decodedlistNorm, rotationsA)))
 
-np.savetxt('QIn.txt', trainingData[0], delimiter=' ') 
-np.savetxt('QHat.txt', decoded_quat[0], delimiter=' ')
-np.savetxt('QBar.txt', decodedlistNorm, delimiter=' ')  
+#np.savetxt('QIn.txt', trainingData[0], delimiter=' ') 
+#np.savetxt('QHat.txt', decoded_quat[0], delimiter=' ')
+#np.savetxt('QBar.txt', decodedlistNorm, delimiter=' ')  
 #np.savetxt('ScaledIn.txt', trainingData[0], delimiter=' ') 
 
 #decoding
