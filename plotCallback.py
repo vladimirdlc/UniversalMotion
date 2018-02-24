@@ -9,7 +9,8 @@ from matplotlib import pyplot as plt
 from IPython.display import clear_output
 
 class PlotLoss(keras.callbacks.Callback):
-    self.ymax = 0.1
+    ymax = 0.2
+    ymin = 0.0
 
     def __init__(self, epochs=-1, path=""):
         self.epochs = epochs
@@ -37,6 +38,7 @@ class PlotLoss(keras.callbacks.Callback):
         plt.plot(self.x, self.losses, label="loss")
         plt.plot(self.x, self.val_losses, label="val_loss")
         plt.ylim(ymax=self.ymax)
+        plt.ylim(ymin=self.ymin)
         plt.legend()
         plt.show()
         plt.pause(0.0001)
