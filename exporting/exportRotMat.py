@@ -176,7 +176,9 @@ def softmax(x, **kw):
 
 def softmin(x, **kw):
     return -softmax(-x, **kw)
-    
+
+scale = 1000
+
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
     
@@ -196,11 +198,11 @@ def process_file_rotations(filename, window=240, window_step=120):
         for joint in frame:
             euler = Quaternions(joint).euler().ravel()
             #eang library uses convention z,y,x
-            m = eang.euler2mat(euler[2], euler[1], euler[0])
+            m = eang.euler2mat(euler[0], euler[1], euler[2])
             input = (np.array(m[0].tolist()+m[1].tolist())+1)*0.5 #6 values
             #denormalizatioin is *2-1
             
-            joints.append(input)
+            joints.append(joint*scale)
 
         reformatRotations.append(joints)
 
@@ -445,6 +447,16 @@ for i, item in enumerate(cmu_files):
     clips = process_file_rotations(item, 480, 240)
     cmu_rot_clips += clips
 data_clips = np.array(cmu_rot_clips)
+
+std = np.std(data_clips)
+print(std)
+mean = np.mean(data_clips)
+data_clips = (data_clips - mean) / std
+np.savez_compressed('cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
+
+print(scale)
+
+'''
 np.savez_compressed('data_rotation_cmu_quat480', clips=data_clips)
 
 cmu_clips = []
@@ -466,6 +478,7 @@ for i, item in enumerate(hdm05_files):
 data_clips = np.array(hdm05_clips)
 data_classes = np.array(hdm05_classes)
 np.savez_compressed('data_hdm05', clips=data_clips, classes=data_classes)
+'''
 
 """
 styletransfer_files = get_files('styletransfer')
