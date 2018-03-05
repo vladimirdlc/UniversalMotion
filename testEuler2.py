@@ -15,6 +15,7 @@ from math import radians, degrees
 import sys
 import keras as K
 from itertools import islice
+from keras.layers.recurrent import LSTM
 
 from keras.layers.normalization import BatchNormalization
 from keras.layers import GRU
@@ -24,7 +25,7 @@ np.set_printoptions(suppress=True,
 np.random.seed(0)
 
 version = "tq2"
-fileChanged = "cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1000"
+fileChanged = "data_rotation_cmu_Euler_full_j30_ws120_standardized_scaled1000"
 
 print('started processing {}', fileChanged)
 X = np.load(fileChanged+".npz")['clips']
@@ -73,7 +74,7 @@ epochs = 600
 
 network.compile(optimizer='adam', loss='mse')
 
-batch_size = 16
+batch_size = 1
 #network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
 idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)

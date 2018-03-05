@@ -20,7 +20,8 @@ from keras.layers.recurrent import LSTM
 from keras.layers.normalization import BatchNormalization
 from keras.layers import GRU
 
-np.set_printoptions(suppress=True)
+np.set_printoptions(suppress=True,
+   formatter={'float_kind':'{:0.2f}'.format})
 np.random.seed(0)
 
 version = "tq2"
@@ -73,7 +74,7 @@ epochs = 600
 
 network.compile(optimizer='adam', loss='mse')
 
-batch_size = 16
+batch_size = 1
 #network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
 idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)
