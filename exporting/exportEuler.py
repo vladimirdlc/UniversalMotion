@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import scipy.io as io
 import scipy.ndimage.filters as filters
-import eulerangles as eang
+
 import math
 sys.path.append('../../motion')
 import BVH as BVH
@@ -178,7 +178,7 @@ def softmax(x, **kw):
 def softmin(x, **kw):
     return -softmax(-x, **kw)
 
-scale = 10
+scale = 1000
 
 #min max
 def process_file_rotations(filename, window=240, window_step=120):
@@ -232,7 +232,7 @@ def process_file_rotations(filename, window=240, window_step=120):
         
     return windows
 
-def process_file(filename, window=240, window_step=60):
+def process_file(filename, window=240, window_step=120):
     
     anim, names, frametime = BVH.load(filename)
     
@@ -362,7 +362,7 @@ for i, item in enumerate(cmu_files):
     print('Processing Rotation %i of %i (%s)' % (i, len(cmu_files), item))
     clips = process_file_rotations(item)
     cmu_rot_clips += clips
-    if i == 1: break
+#    if i == 1: break
     
 
 data_clips = np.array(cmu_rot_clips)
@@ -370,7 +370,8 @@ std = np.std(data_clips)
 
 print(std)
 mean = np.mean(data_clips)
-data_clips = (data_clips - mean) / std
+data_clips -= mean
+data_clips /= std
 np.savez_compressed('data_rotation_cmu_Euler_full_j30_ws120_standardized_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
 
 """
