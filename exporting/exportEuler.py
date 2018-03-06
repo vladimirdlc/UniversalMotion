@@ -198,13 +198,13 @@ def process_file_rotations(filename, window=240, window_step=120):
         joints = []
         for joint in frame:
             eu = Quaternions(joint).euler().ravel()
-            print(eu)
+            #print(eu)
             #eu = [math.degrees(eu[0]), math.degrees(eu[1]), math.degrees(eu[2])
             #if eu[0] < 0: eu[0] += math.pi/2
             #if eu[1] < 0: eu[1] += math.pi/2
             #if eu[2] < 0: eu[2] += math.pi/2
             
-            joints.append(eu)
+            joints.append(eu*scale)
 
         reformatRotations.append(joints)
 
