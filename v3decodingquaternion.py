@@ -175,7 +175,6 @@ rotationsA = np.array(reformatRotations)
 
 print(anim.rotations.shape)
 
-
 rotationsA = rotationsA.reshape(rotationsA.shape[0], rotationsA.shape[1]*rotationsA.shape[2])[0:trainingData[0].shape[0]]
 reformatRotationsEuler = reformatRotationsEuler.reshape(reformatRotationsEuler.shape[0], reformatRotationsEuler.shape[1]*reformatRotationsEuler.shape[2])[0:trainingData[0].shape[0]]
 print(rotations.shape)
