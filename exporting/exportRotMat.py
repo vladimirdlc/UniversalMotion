@@ -451,7 +451,8 @@ data_clips = np.array(cmu_rot_clips)
 std = np.std(data_clips)
 print(std)
 mean = np.mean(data_clips)
-data_clips = (data_clips - mean) / std
+data_clips -= mean
+data_clips /= std
 np.savez_compressed('cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
 
 print(scale)
