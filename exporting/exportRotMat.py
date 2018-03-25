@@ -202,7 +202,7 @@ def process_file_rotations(filename, window=240, window_step=120):
             input = (np.array(m[0].tolist()+m[1].tolist())+1)*0.5 #6 values
             #denormalizatioin is *2-1
             
-            joints.append(joint*scale)
+            joints.append(input*scale)
 
         reformatRotations.append(joints)
 
