@@ -199,8 +199,7 @@ def process_file_rotations(filename, window=240, window_step=120):
             euler = Quaternions(joint).euler().ravel()
             #eang library uses convention z,y,x
             m = eang.euler2mat(euler[0], euler[1], euler[2])
-            input = (np.array(m[0].tolist()+m[1].tolist())+1)*0.5 #6 values
-            #denormalizatioin is *2-1
+            input = np.array(m[0].tolist()+m[1].tolist()) #6 values
             
             joints.append(input*scale)
 

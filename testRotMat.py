@@ -16,9 +16,6 @@ import sys
 import keras as K
 from itertools import islice
 
-from keras.layers.normalization import BatchNormalization
-from keras.layers import GRU
-
 np.set_printoptions(suppress=True,
    formatter={'float_kind':'{:0.2f}'.format})
 np.random.seed(0)
