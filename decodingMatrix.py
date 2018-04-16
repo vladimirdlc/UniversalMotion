@@ -126,7 +126,7 @@ decodedMatrix = network.predict(trainingData)
 print(decodedMatrix.shape)
 print(">MSE I/O NN Q <> QHat:")
 print(mse(trainingData, decodedMatrix))
-decoded = ((decodedMatrix[0]*std)+mean)/scale #first only
+decoded = ((decodedMatrix[0]*std)+mean) #first only
 
 #denormalizing matrix data from [0, 1] to [-1,1]
 
@@ -143,7 +143,6 @@ anim, names, frametime = BVH.load(mypath+folder+'/'+filename, order='zyx', world
 
 """ Convert to 60 fps (if using 60fps version) """
 anim = anim[::2]
-BVH.save("original.bvh", anim)
 
 globalRot = anim.rotations[:,0:1]
 rotations = anim.rotations[:,1:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
@@ -169,7 +168,7 @@ for frame in rotations:
         #eang library uses convention z,y,x
         m = eang.euler2mat(euler[0], euler[1], euler[2])
         input = (np.array(m[0].tolist()+m[1].tolist())) #6 values
-        joints.append(input*scale)
+        joints.append(input)
 
     reformatRotationsMatrix.append(joints)
 
@@ -180,21 +179,42 @@ reformatEulerDecodedRotMat = []
 for frame in decoded:
     joints = []
     jointsMatrix = []
+    first = True
+    second = True
     
     for mat in zip(*[iter(frame)]*6):
-        print(np.array(mat).shape)
+        if first:
+            first = False
+            continue
+
+        
+        mat /= scale
         m0 = np.array([mat[0], mat[1], mat[2]])
         m1 = np.array([mat[3], mat[4], mat[5]])
-        print(m0.shape)
-        print(m1.shape)
+        
         m2 = np.cross(m0, m1)
         m3 = np.cross(m2, m0)
-        
         m = [m0, m3, m2]
-        #print(m)
-        joint = np.degrees(eang.mat2euler(m)) #in z,y,x format
+        
+        print('real e:')
+        print(np.degrees(rotations[0][1].euler())) 
+        print('from m:')
+        #9.372200 17.869300 -17.319800 -3.231600 -7.597000 -2.016800 -13.810200 2.500200 3.350200
+        joint = eang.mat2euler(m) #in z,y,x rad format
+        print(joint)
+        print(degrees(joint))
+        #print(np.asarray(m).shape)
+        
+        if second:
+            second = False
+            continue
+        
+        #print(np.asarray(m))
+        print(mat[6])
+        
+
         #joints.append(joint)
-        jointsMatrix.append(joint)
+        jointsMatrix.append(normalize(joint))
         
     #reformatRotations.append(joints)
     reformatEulerDecodedRotMat.append(jointsMatrix)
@@ -229,6 +249,7 @@ for frame in reformatEulerDecodedRotMat:
             file.write('{0} {1} {2} '.format(rootRot[idx][0], rootRot[idx][1], rootRot[idx][2]))
             #frameLine.append(rootRot[idx])
             first = False
+            continue
             
         
         #quateu = np.degrees(np.array(joint))
@@ -241,7 +262,7 @@ for frame in reformatEulerDecodedRotMat:
         #if j != 0:
         print(joint)
         
-        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
+        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='xyz')
         
         outputList.append(frameLine)
 

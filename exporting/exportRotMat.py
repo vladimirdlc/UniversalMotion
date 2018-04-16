@@ -443,7 +443,7 @@ cmu_files = get_files('cmu')
 cmu_rot_clips = []
 for i, item in enumerate(cmu_files):
     print('Processing Rotation %i of %i (%s)' % (i, len(cmu_files), item))
-    clips = process_file_rotations(item, 480, 240)
+    clips = process_file_rotations(item)
     cmu_rot_clips += clips
 data_clips = np.array(cmu_rot_clips)
 
@@ -492,7 +492,7 @@ for i, item in enumerate(styletransfer_files):
 data_clips = np.array(styletransfer_clips)
 np.savez_compressed('data_styletransfer', clips=data_clips, classes=styletransfer_classes)
 """
-
+'''
 edin_locomotion_files = get_files('edin_locomotion')
 edin_locomotion_clips = []
 for i, item in enumerate(edin_locomotion_files):
@@ -555,3 +555,4 @@ for i, item in enumerate(edin_terrain_files):
     edin_terrain_clips += clips
 data_clips = np.array(edin_terrain_clips)
 np.savez_compressed('data_edin_terrain', clips=data_clips)
+'''
