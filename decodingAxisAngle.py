@@ -128,7 +128,8 @@ print(">MSE I/O NN Q <> QHat:")
 print(mse(trainingData, decodedMatrix))
 
 #denormalizing matrix data from [0, 1] to [-1,1]
-decoded = (decodedMatrix*2)-1
+
+decoded = ((decodedMatrix[0]*std)+mean)/scale #first only
 
 mypath = 'data/decoding/'
 file = open(mypath+'output.txt', 'w')
