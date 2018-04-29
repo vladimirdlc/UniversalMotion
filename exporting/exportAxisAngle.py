@@ -196,10 +196,9 @@ def process_file_rotations(filename, window=240, window_step=120):
         joints = []
 
         for joint in frame:
-            euler = Quaternions(joint).euler().ravel()
+            euler = Quaternions(joint).euler().ravel() #exporting x,y,z
             #eang library uses convention z,y,x
-            
-            angle, axis = eang.euler2angle_axis(euler[0], euler[1], euler[2])
+            angle, axis = eang.euler2angle_axis(euler[2], euler[1], euler[0])
             input = axis.tolist()
             input.insert(0, angle)
             #print(input)
@@ -447,7 +446,7 @@ cmu_files = get_files('cmu')
 cmu_rot_clips = []
 for i, item in enumerate(cmu_files):
     print('Processing Rotation %i of %i (%s)' % (i, len(cmu_files), item))
-    clips = process_file_rotations(item, 480, 240)
+    clips = process_file_rotations(item)
     cmu_rot_clips += clips
 data_clips = np.array(cmu_rot_clips)
 
@@ -496,7 +495,7 @@ for i, item in enumerate(styletransfer_files):
 data_clips = np.array(styletransfer_clips)
 np.savez_compressed('data_styletransfer', clips=data_clips, classes=styletransfer_classes)
 """
-
+'''
 edin_locomotion_files = get_files('edin_locomotion')
 edin_locomotion_clips = []
 for i, item in enumerate(edin_locomotion_files):
@@ -559,3 +558,4 @@ for i, item in enumerate(edin_terrain_files):
     edin_terrain_clips += clips
 data_clips = np.array(edin_terrain_clips)
 np.savez_compressed('data_edin_terrain', clips=data_clips)
+'''
