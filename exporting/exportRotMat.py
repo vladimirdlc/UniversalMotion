@@ -248,8 +248,11 @@ def MSEConvertAndBackTest():
             euler = Quaternions(joint).euler().ravel() #we get x,y,z
             #eang library uses convention z,y,x
             m = eang.euler2mat(euler[0], euler[1], euler[2])
-            input = np.array(m[0].tolist()+m[1].tolist()) #6 values
-            joints.append(input*scale)
+            input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
+            joints.append(input)
+            #joints.append(input*scale)
+            print(input)
+            break
 
         reformatRotations.append(joints)
 
@@ -265,13 +268,16 @@ def MSEConvertAndBackTest():
         second = True
         for mat in frame:
             mat = np.array(mat)
-            mat /= scale
+            #mat /= scale
             m0 = np.array([mat[0], mat[1], mat[2]])
             m1 = np.array([mat[3], mat[4], mat[5]])
-            input = np.array(m[0].tolist()+m[1].tolist()) #6 values
-            m2 = np.cross(m0, m1)
-            m3 = np.cross(m2, m0)
-            m = [m0, m3, m2]
+            m2 = np.array([mat[6], mat[7], mat[8]])
+            
+            input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
+            m = [m0, m1, m2]
+            #m2 = np.cross(m0, m1)
+            #m3 = np.cross(m2, m0)
+            #m = [m0, m3, m2]
             
             joint = eang.mat2euler(m) #in z,y,x rad format
             jointsMatrix.append(joint)
@@ -287,7 +293,6 @@ def MSEConvertAndBackTest():
     #print(">denormalize batch:")
     #print(np.square(np.subtract(denormalizeForNN(rotationsA), rotations)).mean())
     print(">B[0]-Original[0]:")
-
     print(np.square(np.subtract(reformatMatrixDecodedRotMat, rotations[0])).mean())
     #print(">MSE Test [0, 0, 0, 1.1], [0, 0, 0, 1.12]:")
     #print(np.square(np.subtract([0, 0, 0, 1.1], [0, 0, 0, 1.12])).mean())
