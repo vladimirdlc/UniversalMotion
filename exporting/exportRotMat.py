@@ -177,7 +177,7 @@ def softmax(x, **kw):
 def softmin(x, **kw):
     return -softmax(-x, **kw)
 
-scale = 1000
+scale = 1
 
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
@@ -185,55 +185,9 @@ def process_file_rotations(filename, window=240, window_step=120):
     """ Convert to 60 fps """
     anim = anim[::2]
     
-    """ Do FK """
-    rotations = anim.rotations[:,1:len(anim.rotations)]
-    """ Remove Uneeded Joints """
-    reformatRotations = []
-    
-    for frame in rotations:
-        joints = []
-
-        for joint in frame:
-            euler = Quaternions(joint).euler().ravel() #we get x,y,z
-            #eang library uses convention z,y,x
-            m = eang.euler2mat(euler[0], euler[1], euler[2])
-            input = np.array(m[0].tolist()+m[1].tolist()) #6 values
-            
-            joints.append(input*scale)
-
-        reformatRotations.append(joints)
-
-    rotations = np.array(reformatRotations)
-
-    print(rotations.shape)
-    
-    """ Slide over windows """
-    windows = []
-    windows_classes = []    
-
-    for j in range(0, len(rotations)-window//8, window_step):
-        
-        """ If slice too small pad out by repeating start and end poses """
-        slice = rotations[j:j+window]
-
-        if len(slice) < window:
-            left  = slice[:1].repeat((window-len(slice))//2 + (window-len(slice))%2, axis=0)
-            right = slice[-1:].repeat((window-len(slice))//2, axis=0)
-            slice = np.concatenate([left, slice, right], axis=0)
-        
-        if len(slice) != window: raise Exception()
-        
-        windows.append(slice)
-        
-    return windows
-    
-
-def MSEConvertAndBackTest():
     filename = '01_01.bvh'
-    anim, names, frametime = BVH.load(filename, order='zyx', world=False)
-    
-    """ Convert to 60 fps """
-    anim = anim[::2]
+    anim, names, frametime = BVH.load(filename, order='zyx', world=False)    
+    count = 0
     
     """ Remove Uneeded Joints """
     #encoding
@@ -247,12 +201,54 @@ def MSEConvertAndBackTest():
         for joint in frame:
             euler = Quaternions(joint).euler().ravel() #we get x,y,z
             #eang library uses convention z,y,x
-            m = eang.euler2mat(euler[0], euler[1], euler[2])
+            m = eang.euler2mat(euler[2], euler[1], euler[0])
             input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
             joints.append(input)
-            #joints.append(input*scale)
-            print(input)
-            break
+        reformatRotations.append(joints)
+
+    rotations = np.array(reformatRotations)
+
+    BVH.save("output.bvh", anim)
+    
+    """ Slide over windows """
+    windows = []
+    windows_classes = []    
+
+    for j in range(0, len(rotations)-window//8, window_step):
+        """ If slice too small pad out by repeating start and end poses """
+        slice = rotations[j:j+window]
+
+        if len(slice) < window:
+            left  = slice[:1].repeat((window-len(slice))//2 + (window-len(slice))%2, axis=0)
+            right = slice[-1:].repeat((window-len(slice))//2, axis=0)
+            slice = np.concatenate([left, slice, right], axis=0)
+        
+        if len(slice) != window: raise Exception()
+        
+        windows.append(slice)
+        
+    return windows
+
+def MSEConvertAndBackTest():
+    filename = '01_01.bvh'
+    anim, names, frametime = BVH.load(filename, order='zyx', world=False)    
+    count = 0
+    
+    """ Remove Uneeded Joints """
+    #encoding
+    rotations = anim.rotations[:,1:len(anim.rotations)]
+    """ Remove Uneeded Joints """
+    reformatRotations = []
+    
+    for frame in rotations:
+        joints = []
+
+        for joint in frame:
+            euler = Quaternions(joint).euler().ravel() #we get x,y,z
+            #eang library uses convention z,y,x
+            m = eang.euler2mat(euler[2], euler[1], euler[0])
+            input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
+            joints.append(input)
 
         reformatRotations.append(joints)
 
@@ -264,55 +260,51 @@ def MSEConvertAndBackTest():
         joints = []
         jointsMatrix = []
         jointsToCompare = []
-        first = True
-        second = True
+
         for mat in frame:
             mat = np.array(mat)
-            #mat /= scale
             m0 = np.array([mat[0], mat[1], mat[2]])
             m1 = np.array([mat[3], mat[4], mat[5]])
             m2 = np.array([mat[6], mat[7], mat[8]])
             
             input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
             m = [m0, m1, m2]
-            #m2 = np.cross(m0, m1)
-            #m3 = np.cross(m2, m0)
-            #m = [m0, m3, m2]
             
             joint = eang.mat2euler(m) #in z,y,x rad format
             jointsMatrix.append(joint)
             jointsToCompare.append(input)
             
-    #reformatRotations.append(joints)
     reformatMatrixDecodedRotMat = np.array(jointsToCompare)
 
-    #print(">A-R:")
-    #print(np.square(np.subtract(rotationsA, rotations)).mean())
-    #print(">B-R:")
-    #print(np.square(np.subtract(rotationsB, rotations)).mean())
-    #print(">denormalize batch:")
-    #print(np.square(np.subtract(denormalizeForNN(rotationsA), rotations)).mean())
     print(">B[0]-Original[0]:")
     print(np.square(np.subtract(reformatMatrixDecodedRotMat, rotations[0])).mean())
-    #print(">MSE Test [0, 0, 0, 1.1], [0, 0, 0, 1.12]:")
-    #print(np.square(np.subtract([0, 0, 0, 1.1], [0, 0, 0, 1.12])).mean())
-        
+    BVH.save("output.bvh", anim)
+
 def get_files(directory):
     return [os.path.join(directory,f) for f in sorted(list(os.listdir(directory)))
     if os.path.isfile(os.path.join(directory,f))
     and f.endswith('.bvh') and f != 'rest.bvh'] 
-    
-MSEConvertAndBackTest();
-'''
+
 cmu_files = get_files('cmu')
+data_clips = np.array(cmu_rot_clips)
+std = np.std(data_clips)
 
 cmu_rot_clips = []
 for i, item in enumerate(cmu_files):
     print('Processing Rotation %i of %i (%s)' % (i, len(cmu_files), item))
     clips = process_file_rotations(item)
     cmu_rot_clips += clips
-data_clips = np.array(cmu_rot_clips)
 
+data_clips = np.array(cmu_rot_clips)
+std = np.std(data_clips)
+
+print(std)
+mean = np.mean(data_clips)
+data_clips -= mean
+data_clips /= std
+np.savez_compressed('data_rotation_cmu_exportRotMat_full_j30_ws120_standardized_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
+
+'''
 std = np.std(data_clips)
 print(std)
 mean = np.mean(data_clips)
