@@ -4,7 +4,7 @@ import numpy as np
 import scipy.io as io
 import scipy.ndimage.filters as filters
 import eulerangles as eang
-sys.path.append('../../motion')
+sys.path.append('../../')
 import BVH as BVH
 import Animation as Animation
 from Quaternions import Quaternions
@@ -177,7 +177,7 @@ def softmax(x, **kw):
 def softmin(x, **kw):
     return -softmax(-x, **kw)
 
-scale = 1000
+scale = 1
 
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
@@ -203,7 +203,7 @@ def process_file_rotations(filename, window=240, window_step=120):
             input.insert(0, angle)
             #print(input)
             input = np.array(input) #4 values
-            
+            print(input)
             joints.append(input*scale)
 
         reformatRotations.append(joints)
@@ -241,85 +241,43 @@ def MSEConvertAndBackTest():
     anim = anim[::2]
     
     """ Do FK """
-    print(len(anim.rotations))
     rotations = anim.rotations[:,1:len(anim.rotations)]
-    print(len(rotations))
     """ Remove Uneeded Joints """
     reformatRotations = []
 
-    #encoding
     for frame in rotations:
         joints = []
-        previousJoint = []
-        
+
         for joint in frame:
-            if len(previousJoint) == 0: 
-                if joint[3] > 0:
-                    joint = -joint
-                    previousJoint = joint
-                    joint = normalizeForNN(joint)
-            else:
-                distance1 = np.linalg.norm(joint-previousJoint)
-                distance2 = np.linalg.norm(-joint-previousJoint)
-                
-                if distance1 > distance2:
-                    joint = normalizeForNN(-joint)
-                else:
-                    joint = normalizeForNN(joint)
-                    
-            joints.append(joint)
+            euler = Quaternions(joint).euler().ravel() #exporting x,y,z
+            #eang library uses convention z,y,x
+            angle, axis = eang.euler2angle_axis(euler[2], euler[1], euler[0])
+            input = axis.tolist()
+            input.insert(0, angle)
+            #print(input)
+            input = np.array(input) #4 values
+            #print(input)
+            joints.append(input)
 
         reformatRotations.append(joints)
-        
-    rotationsA = np.array(reformatRotations)
-    
+
+    rotationsFormatted = np.array(reformatRotations)
+
     reformatRotations = []
-    print(rotationsA.shape)
-    
-    #print(denormalizeForNN(rotationsA))
-    
-    #decoding
-    for frame in rotationsA:
+
+    for frame in rotationsFormatted:
         joints = []
-        previousJoint = []
-        
-        for joint in frame:
-            if len(previousJoint) == 0:
-                previousJoint = joint
-                joint = normalizeForNN(joint)
-            else:
-                distance1 = np.linalg.norm(joint-previousJoint)
-                distance2 = np.linalg.norm(-joint-previousJoint)
-                
-                if distance1 > distance2:
-                    joint = denormalizeForNN(-joint)
-                else:
-                    joint = denormalizeForNN(joint)
-                    
+        for theta,z,y,x in frame:
+            z, y, x = eang.angle_axis2euler(theta, [z,y,x])
+            
+            joint = np.degrees([z,y,x]) #in z,y,x format
             joints.append(joint)
-
         reformatRotations.append(joints)
-        
-    rotationsB = np.array(reformatRotations)
-    
-    print(rotationsB.shape)
-    print(">A-B:")
-    print(np.square(np.subtract(rotationsA, rotationsB)).mean())
-    print(">A-R:")
-    print(np.square(np.subtract(rotationsA, rotations)).mean())
-    print(">B-R:")
-    print(np.square(np.subtract(rotationsB, rotations)).mean())
-    print(">denormalize batch:")
-    print(np.square(np.subtract(denormalizeForNN(rotationsA), rotations)).mean())
-    print(">B[0]-Original[0]:")
-    print(np.square(np.subtract(rotationsB[0], rotations[0])).mean())
-    print(">MSE Test [0, 0, 0, 1.1], [0, 0, 0, 1.12]:")
-    print(np.square(np.subtract([0, 0, 0, 1.1], [0, 0, 0, 1.12])).mean())
 
-    
-    
+    print(">A-B:")
+    print(np.square(np.subtract(rotations, rotationsFormatted)).mean())
+
 def process_file(filename, window=240, window_step=120):
-    
     anim, names, frametime = BVH.load(filename)
     
     """ Convert to 60 fps """
@@ -441,6 +399,9 @@ def get_files(directory):
     if os.path.isfile(os.path.join(directory,f))
     and f.endswith('.bvh') and f != 'rest.bvh'] 
 
+MSEConvertAndBackTest()
+
+'''
 cmu_files = get_files('cmu')
 
 cmu_rot_clips = []
@@ -458,6 +419,8 @@ data_clips /= std
 np.savez_compressed('cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
 
 print(scale)
+'''
+
 
 '''
 np.savez_compressed('data_rotation_cmu_quat480', clips=data_clips)
