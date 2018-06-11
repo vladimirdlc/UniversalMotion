@@ -63,7 +63,7 @@ def extractBVHGlobals(fullPath):
                 if second:
                     rootRot.append((x,y,z))
                     second = False
-                localsRot.append((x,y,z))
+                localsRot.append((z,y,x))
                 
     file.close()
     return rootPos, rootRot, localsRot
@@ -107,8 +107,6 @@ X = None
 
 dataSplitPoint = int(len(qdata)*0.8)
 
-#trainingData = array(qdata[0:dataSplitPoint])
-#validationData = array(qdata[dataSplitPoint:len(qdata)])
 trainingData = qdata
 
 network = load_model('models/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_model.h5')
@@ -139,40 +137,14 @@ onlyfiles = [f for f in listdir(mypath+folder) if isfile(join(mypath+folder, f))
 filename = onlyfiles[0]
 rootPos, rootRot, localsRot = extractBVHGlobals(mypath+folder+'/'+filename)
 
-anim, names, frametime = BVH.load(mypath+folder+'/'+filename, order='zyx', world=False)
+anim, names, frametime = BVH.load(mypath+folder+'/'+filename, order='zyx', world=True)
 
 """ Convert to 60 fps (if using 60fps version) """
-anim = anim[::2]
+#anim = anim[::2]
 
-globalRot = anim.rotations[:,0:1]
 rotations = anim.rotations[:,1:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
-#rangedRotations = np.array([
-#     1,
-#     2,  3,  4,  5,
-#     7,  8,  9, 10,
-#    12, 13, 15, 16,
-#    18, 19, 20, 22,
-#    25, 26, 27, 29])
-#rotations = anim.rotations[:,1:]
-#globalRot = anim.rotations[:,0:1] 
-print(len(rotations))
-#reformatRotations = []
-print(anim.rotations.shape)
+print(rotations.shape)
 reformatRotationsMatrix = []
-
-for frame in rotations:
-    joints = []
-
-    for joint in frame:
-        euler = Quaternions(joint).euler().ravel()
-        #eang library uses convention z,y,x
-        m = eang.euler2mat(euler[0], euler[1], euler[2])
-        input = (np.array(m[0].tolist()+m[1].tolist())) #6 values
-        joints.append(input)
-
-    reformatRotationsMatrix.append(joints)
-
-reformatOriginalRotMat = np.array(reformatRotationsMatrix)
 
 reformatEulerDecodedRotMat = []
 
@@ -181,14 +153,9 @@ for frame in decoded:
     jointsMatrix = []
     first = True
     second = True
-    
     for mat in zip(*[iter(frame)]*6):
-        if first:
-            first = False
-            continue
-
-        
         mat /= scale
+        print(mat.shape)
         m0 = np.array([mat[0], mat[1], mat[2]])
         m1 = np.array([mat[3], mat[4], mat[5]])
         
@@ -199,21 +166,10 @@ for frame in decoded:
         print('real e:')
         print(np.degrees(rotations[0][1].euler())) 
         print('from m:')
-        #9.372200 17.869300 -17.319800 -3.231600 -7.597000 -2.016800 -13.810200 2.500200 3.350200
         joint = eang.mat2euler(m) #in z,y,x rad format
         print(joint)
-        print(degrees(joint))
-        #print(np.asarray(m).shape)
-        
-        if second:
-            second = False
-            continue
-        
-        #print(np.asarray(m))
-        print(mat[6])
-        
+        print('new>', degrees(joint[0]), degrees(joint[1]), degrees(joint[2]))
 
-        #joints.append(joint)
         jointsMatrix.append(normalize(joint))
         
     #reformatRotations.append(joints)
@@ -221,7 +177,6 @@ for frame in decoded:
 
 #inEulerDecodedRotMat
 reformatEulerDecodedRotMat = np.array(reformatEulerDecodedRotMat)
-
 
 #print(">Decoded - RotationsEuler:")
 #print(np.square(mse(decodedlist, reformatRotationsEuler)))
@@ -239,6 +194,7 @@ for frame in reformatEulerDecodedRotMat:
         file.write('\n')
     
     first = True
+    second = True
     j = 1
     
     frameLine = []
@@ -250,11 +206,10 @@ for frame in reformatEulerDecodedRotMat:
             #frameLine.append(rootRot[idx])
             first = False
             continue
-            
         
-        #quateu = np.degrees(np.array(joint))
-        #quateu = np.degrees(Quaternions.from_euler(np.array(joint)).euler().ravel())
-        #frameLine.append(joint)
+        quateu = np.degrees(np.array(joint*scale))
+        quateu = np.degrees(Quaternions.from_euler(np.array(joint*scale)).euler().ravel())
+        frameLine.append(joint*scale)
 
         file.write('{0} {1} {2} '.format(joint[0], joint[1], joint[2])) #zyx
         
@@ -262,35 +217,14 @@ for frame in reformatEulerDecodedRotMat:
         #if j != 0:
         print(joint)
         
-        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='xyz')
+        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
         
         outputList.append(frameLine)
 
         j+=1
     idx+=1
 
-#print(outputList[0])
-
-#print(outputList[0].shape)
-
-
 BVH.save("output.bvh", anim)
 
 fileName = file.name
 file.close()
-
-#print(outputList[0:reformatRotationsEuler.shape[0]])
-#print(reformatRotationsEuler)
-'''
-arrayOut = []
-
-with open(fileName) as file:
-    arrayOut = [[float(digit) for digit in line.split()[5:-1]] for line in file] #3:-1 remove position
-
-print(">Manual-R:")
-print(np.square(mse(arrayOut[:][:], reformatRotationsEuler)))
-'''
-
-print("finished")
-
-
