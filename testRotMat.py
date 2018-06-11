@@ -21,7 +21,7 @@ np.set_printoptions(suppress=True,
 np.random.seed(0)
 
 version = "tq2"
-fileChanged = "cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1000"
+fileChanged = "cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1"
 
 print('started processing {}', fileChanged)
 X = np.load(fileChanged+".npz")['clips']

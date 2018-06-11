@@ -21,7 +21,7 @@ np.set_printoptions(suppress=True,
 np.random.seed(0)
 
 version = "tq2"
-fileChanged = "cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled1000"
+fileChanged = "cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled1"
 
 print('started processing {}', fileChanged)
 X = np.load(fileChanged+".npz")['clips']
@@ -58,23 +58,21 @@ hiddenUnits = 256
 
 network.add(Dropout(dropoutAmount, input_shape=(windowSize, degreesOFreedom)))
 
-network.add(Conv1D(hiddenUnits, kernel_size, activation='relu', use_bias=True, padding='same'))
+network.add(Conv1D(hiddenUnits, kernel_size, activation='tanh', use_bias=True, padding='same'))
 
 network.add(Dropout(dropoutAmount, input_shape=(windowSize, hiddenUnits)))
 network.add(Conv1D(degreesOFreedom, kernel_size, activation='linear', use_bias=True, padding='same'))
 
 network.summary()
 
-
 epochs = 600
 
 network.compile(optimizer='adam', loss='mse')
 
-batch_size = 16
+batch_size = 1
 #network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
-idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2_ReLu'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)
-
+idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)
 plot_losses = PlotLoss(epochs, 'results/'+idPrefix)
 
 print(trainingData.shape)
@@ -95,7 +93,6 @@ np.savetxt('results/{}_lossHistory.txt'.format(idPrefix), numpy_loss_history, de
 numpy_loss_history = np.array(val_loss_history)
 np.savetxt('results/{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
 
-
 network.save_weights('{}_weigths.h5'.format(idPrefix))
 network.save('{}_model.h5'.format(idPrefix))
 
@@ -103,6 +100,5 @@ decoded_quat = array(network.predict(trainingData))
 
 print("MSE I/O NN:")
 print(np.square(np.subtract(trainingData, decoded_quat)).mean())
-
 print("finished")
 print(fileChanged)
