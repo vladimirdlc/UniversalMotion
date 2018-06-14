@@ -89,39 +89,37 @@ def chunks(l, n):
 
 print('processing...')
 
-fileToDecode = 'cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1000.npz'
+fileToDecode = 'cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1.npz'
 
 X = np.load(fileToDecode)['clips']
 mean = np.load(fileToDecode)['mean']
 std = np.load(fileToDecode)['std']
 scale = np.load(fileToDecode)['scale']
 
-print(X.shape)
+#print(X.shape)
 
 X = X.reshape(X.shape[0], X.shape[1], X.shape[2]*X.shape[3])
 
 qdata = np.array(X[0:200]) #extracting only the BVH section we want to test
-print(qdata.shape)
-
-X = None
+#print(qdata.shape)
 
 dataSplitPoint = int(len(qdata)*0.8)
 
 trainingData = qdata
 
-network = load_model('models/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_model.h5')
+network = load_model('models/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1_k15_hu256_vtq2_e600_d0.15_bz1_valtest0.2_model.h5')
 
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
-print(trainingData.shape)
+#print(trainingData.shape)
 
-network.load_weights('weights/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_weigths.h5')
+network.load_weights('weights/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1_k15_hu256_vtq2_e600_d0.15_bz1_valtest0.2_weigths.h5')
 
 print('decoding...')
 
 decodedMatrix = network.predict(trainingData)
-print(decodedMatrix.shape)
+#print(decodedMatrix.shape)
 print(">MSE I/O NN Q <> QHat:")
 print(mse(trainingData, decodedMatrix))
 decoded = ((decodedMatrix[0]*std)+mean) #first only
@@ -153,18 +151,16 @@ for frame in decoded:
     jointsMatrix = []
     first = True
     second = True
-    for mat in zip(*[iter(frame)]*6):
+    for mat in zip(*[iter(frame)]*9):
         mat /= scale
-        print(mat.shape)
+        #print(mat.shape)
         m0 = np.array([mat[0], mat[1], mat[2]])
         m1 = np.array([mat[3], mat[4], mat[5]])
-        
-        m2 = np.cross(m0, m1)
-        m3 = np.cross(m2, m0)
-        m = [m0, m3, m2]
+        m2 = np.array([mat[6], mat[7], mat[8]])
+        m = [m0, m1, m2]
         
         print('real e:')
-        print(np.degrees(rotations[0][1].euler())) 
+        #print(np.degrees(rotations[0][1].euler())) 
         print('from m:')
         joint = eang.mat2euler(m) #in z,y,x rad format
         print(joint)
