@@ -89,7 +89,7 @@ def chunks(l, n):
 
 print('processing...')
 
-fileToDecode = 'cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled1000.npz'
+fileToDecode = 'cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled1.npz'
 
 X = np.load(fileToDecode)['clips']
 mean = np.load(fileToDecode)['mean']
@@ -109,14 +109,14 @@ dataSplitPoint = int(len(qdata)*0.8)
 
 trainingData = qdata
 
-network = load_model('models/cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_model.h5')
+network = load_model('models/cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled1_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_model.h5')
 
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('weights/cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_weigths.h5')
+network.load_weights('weights/cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled1_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_weigths.h5')
 
 print('decoding...')
 
