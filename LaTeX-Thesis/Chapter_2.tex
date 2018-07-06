@@ -4,12 +4,42 @@ In this chapter it will be referenced previous literature and related research t
 It's worth noticing that neural networks have been developed as a medium of defining
 problem solving in a defined fashion similar to the structure of the human brain.
 
-Neural networks have emerged as a ubiquitous model in machine learning, due their flexibility 
-to adapt to very different types of problems, and handling a numerous amount of variables.
-From prediction models to pattern recognition, to image processing, or generative models, NN and DL are
-techniques are defined to learn from data, allowing them to do data-driven decisions [101]
+Neural networks have emerged as a ubiquitous model in machine learning, due their flexibility to adapt to very different types of problems, and handling a numerous amount of variables.
+From prediction models to pattern recognition, image processing, or generative models, NN and DL are techniques that are defined to learn from data, allowing them to do data-driven decisions.
 Learning from experience, machines therefore can solve problems without the definition
 of a predefined model, but in doing so, at least with a classical implementation, such as
-CNN, the definition of the model is then encoded within the a set of neurons, called hidden layer,
-making it more difficult to easily interpret or change the model without re-training the 
-neural network with other data that could adapt the output of the model.
+CNN, the definition of the model is then encoded within the a set of neurons, called hidden layer, makes it more difficult to easily interpret or change the model without re-training the neural network with other data that could adapt the output of the model.
+
+For the setup of the neural networks and tools to be used in the implementation
+the following components were used:
+
+\subsection{Keras}  \label{subSec:Keras}
+
+\citet{Keras:2018} is a framework for easy and fast protyping of neural networks 
+that can run in CPU or GPU's, excelent for deep learning. It runs using
+Python and works as an abstraction layer for another backend suchs as
+Tensorflow and Theano. 
+
+Keras contains numerous functions for building blocks such as layers, 
+objective functions, activation functions, optimizers, and a set of tools to facilitate 
+the work with image and text.
+
+\subsection{Tensorflow}  \label{subSec:Tensorflow}
+
+As defined in their github repository \citep{Tensorflow:2018} "TensorFlow is an open source software library for numerical computation using data flow graphs.
+The graph nodes represent mathematical operations, while the graph edges represent the multidimensional data arrays 
+(tensors) that flow between them. This flexible architecture enables you to deploy computation to one or more CPUs or GPUs in a desktop, 
+server, or mobile device without rewriting code. TensorFlow also includes TensorBoard, a data visualization toolkit."
+
+\subsection{Autoencoders}  \label{subSec:Autoecoders}
+
+One of the several applications of neural networks is the definition of an architecture defined as Autoencoders. Autoencoders are structures that are compromise of at least an enconding layer, a number of hidden layers and a decoder, where the hidden space is decoded as output.
+
+This type of algorithms have several applications from denoising, to reconstruction, and  definition of manifolds depending of the input of the raw data provided. 
+
+
+As defined in their github repository \citep{Tensorflow:2018} "TensorFlow is an open source software library for numerical computation using data flow graphs.
+The graph nodes represent mathematical operations, while the graph edges represent the multidimensional data arrays 
+(tensors) that flow between them. This flexible architecture enables you to deploy computation to one or more CPUs or GPUs in a desktop, 
+server, or mobile device without rewriting code. TensorFlow also includes TensorBoard, a data visualization toolkit."
+
