@@ -155,12 +155,18 @@ reformatRotations = []
 for frame in decoded:
     joints = []
     print(frame.shape)
+    i = 0
+    
     for theta,z,y,x in zip(*[iter(frame)]*4):
-        z, y, x = eang.angle_axis2euler(theta, [z,y,x])
+        z, y, x = eang.angle_axis2euler(theta, [x,y,z])
         
         joint = np.degrees([z,y,x]) #in z,y,x format
         joints.append(joint)
         print(joint)
+        i = i+1
+        #print('u')
+        #print(X[i])
+        
     reformatRotations.append(joints)
 
 #inEulerDecodedRotMat
