@@ -196,16 +196,14 @@ def process_file_rotations(filename, window=240, window_step=120):
         joints = []
 
         for joint in frame:
-            euler = Quaternions(joint).euler().ravel() #exporting x,y,z
             #eang library uses convention z,y,x
-            angle, axis = eang.euler2angle_axis(euler[2], euler[1], euler[0])
+            angle, axis = Quaternions(joint).angle_axis()
             input = axis.tolist()
             input.insert(0, angle)
             #print(input)
             input = np.array(input) #4 values
             print(input)
             joints.append(input*scale)
-
         reformatRotations.append(joints)
 
     rotations = np.array(reformatRotations)
@@ -399,9 +397,8 @@ def get_files(directory):
     if os.path.isfile(os.path.join(directory,f))
     and f.endswith('.bvh') and f != 'rest.bvh'] 
 
-MSEConvertAndBackTest()
+#MSEConvertAndBackTest()
 
-'''
 cmu_files = get_files('cmu')
 
 cmu_rot_clips = []
@@ -410,7 +407,7 @@ for i, item in enumerate(cmu_files):
     clips = process_file_rotations(item)
     cmu_rot_clips += clips
 data_clips = np.array(cmu_rot_clips)
-
+'''
 std = np.std(data_clips)
 print(std)
 mean = np.mean(data_clips)
