@@ -186,9 +186,7 @@ def process_file_rotations(filename, window=240, window_step=120):
     anim = anim[::2]
     
     """ Do FK """
-    print(len(anim.rotations))
     rotations = anim.rotations[:,1:len(anim.rotations)]
-    print(len(rotations))
     """ Remove Uneeded Joints """
     reformatRotations = []
     
@@ -198,11 +196,9 @@ def process_file_rotations(filename, window=240, window_step=120):
         for joint in frame:
             #eang library uses convention z,y,x
             angle, axis = Quaternions(joint).angle_axis()
-            input = axis.tolist()
-            input.insert(0, angle)
-            #print(input)
+            input = axis.flatten()
+            input = np.insert(input, 0, angle)
             input = np.array(input) #4 values
-            print(input)
             joints.append(input*scale)
         reformatRotations.append(joints)
 
@@ -247,14 +243,19 @@ def MSEConvertAndBackTest():
         joints = []
 
         for joint in frame:
-            euler = Quaternions(joint).euler().ravel() #exporting x,y,z
+            euler = Quaternions(joint).angle_axis() #exporting x,y,z
             #eang library uses convention z,y,x
             angle, axis = eang.euler2angle_axis(euler[2], euler[1], euler[0])
+            print(angle)
+            print(axis)
+            
+            
             input = axis.tolist()
             input.insert(0, angle)
             #print(input)
             input = np.array(input) #4 values
             #print(input)
+            print(input)
             joints.append(input)
 
         reformatRotations.append(joints)
@@ -407,7 +408,8 @@ for i, item in enumerate(cmu_files):
     clips = process_file_rotations(item)
     cmu_rot_clips += clips
 data_clips = np.array(cmu_rot_clips)
-'''
+print('test')
+print(data_clips.shape)
 std = np.std(data_clips)
 print(std)
 mean = np.mean(data_clips)
@@ -416,7 +418,7 @@ data_clips /= std
 np.savez_compressed('cmu_rotations_full_axisangle_30_standardized_w240_ws120_normalfps_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
 
 print(scale)
-'''
+
 
 
 '''
