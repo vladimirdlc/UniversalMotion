@@ -403,7 +403,7 @@ class Quaternions:
         axis    = axis / (np.sqrt(np.sum(axis**2, axis=-1)) + 1e-10)[...,np.newaxis]
         sines   = np.sin(angles / 2.0)[...,np.newaxis]
         cosines = np.cos(angles / 2.0)[...,np.newaxis]
-        return Quaternions(np.concatenate([cosines, axis * sines], axis=-1))
+        return Quaternions(np.concatenate([cosines, axis * sines]))
     
     @classmethod
     def from_euler(cls, es, order='xyz', world=False):
