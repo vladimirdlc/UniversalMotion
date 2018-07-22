@@ -54,7 +54,7 @@ over the nodes with a rectifier function on the output of each operation that wo
 \subsection{BVH}  \label{subSec:BVH}
 
 The Biovision Hierarchy (BVH) character animation file format was developed by Biovision,   
-that \citep{hayes2013acting} have a format with the addition of a hierarchical data structure 
+that have a format with the addition of a hierarchical data structure 
 representing the bones of the skeleton. The BVH file consists of two parts
 where the first section details the hierarchy and initial pose of the skeleton and the second section
 describes the channel data for each frame, thus the motion section.
@@ -69,7 +69,8 @@ Some of represented items are as follow:
 
 \begin{itemize} 
 	\item  Axis Angle.
-	
+	This representation system is compromised of 4 values, 3 representing a vector and another additional one representing 
+	the angle $\theta$ that defines the number of the degrees to rotate such vector.
 	\item  Rotation Matrices
 	
 	\item  Quaternions
