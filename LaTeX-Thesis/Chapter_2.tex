@@ -73,6 +73,35 @@ Some of represented items are as follow:
 	the angle $\theta$ that defines the number of the degrees to rotate such vector.
 	\item  Rotation Matrices
 	
+	We can consider the following set of matrices, for a given euler angles yaw, pitch and roll, each matrix
+	represent a different rotation over a different axis.
+	
+	Rz($\alpha$) = 
+	$\begin{pmatrix} 
+	cos \alpha & -sin \alpha & 0 \\ 
+	sin \alpha & cos \alpha & 0 \\ 
+	0 & 0 & 1  
+	\end{pmatrix} $
+		
+	Ry($\beta$) = 
+	$\begin{pmatrix} 
+	cos \beta & 0 & sin \beta \\ 
+	0 & 1 & 0 \\ 
+	-sin \beta & 0 & cos \beta  
+	\end{pmatrix} $
+	
+	Rx($\gamma$) = 
+	$\begin{pmatrix} 
+	1 & 0 & 0 \\ 
+	0 & cos \gamma & -sin \gamma \\ 
+	0 & sin \gamma & cos \gamma  
+	\end{pmatrix} $ 
+	\bigbreak \bigbreak 
+	Therefore the 3x3 combination of
+	R($\alpha$,$\beta$,$\gamma$) = Rz($\alpha$)*Ry($\beta$)*Rz($\gamma$)
+	
+	represents a rotation under a 3d space.
+	
 	\item  Quaternions
 	
 	\item  Euler Angles
