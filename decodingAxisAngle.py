@@ -158,7 +158,8 @@ for frame in decoded:
     i = 0
     
     for theta,z,y,x in zip(*[iter(frame)]*4):
-        z, y, x = eang.angle_axis2euler(theta, [x,y,z])
+        print(theta,z,y,x)
+        angleaxisq = Quaternions.from_angle_axis(theta, np.array([x,y,z]))
         
         joint = np.degrees([z,y,x]) #in z,y,x format
         joints.append(joint)
