@@ -58,7 +58,7 @@ hiddenUnits = 256
 
 network.add(Dropout(dropoutAmount, input_shape=(windowSize, degreesOFreedom)))
 
-network.add(Conv1D(hiddenUnits, kernel_size, activation='tanh', use_bias=True, padding='same'))
+network.add(Conv1D(hiddenUnits, kernel_size, activation='sigmoid', use_bias=True, padding='same'))
 
 network.add(Dropout(dropoutAmount, input_shape=(windowSize, hiddenUnits)))
 network.add(Conv1D(degreesOFreedom, kernel_size, activation='linear', use_bias=True, padding='same'))
@@ -69,7 +69,7 @@ epochs = 600
 
 network.compile(optimizer='adam', loss='mse')
 
-batch_size = 1
+batch_size = 16
 #network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
 idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)
