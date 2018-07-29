@@ -74,7 +74,7 @@ epochs = 600
 
 network.compile(optimizer='adam', loss='mse')
 
-batch_size = 16
+batch_size = 1
 #network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
 idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size)
@@ -99,9 +99,8 @@ np.savetxt('results/{}_lossHistory.txt'.format(idPrefix), numpy_loss_history, de
 numpy_loss_history = np.array(val_loss_history)
 np.savetxt('results/{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
 
-
-network.save_weights('{}_weigths.h5'.format(idPrefix))
-network.save('{}_model.h5'.format(idPrefix))
+network.save_weights('weigth/{}_weigths.h5'.format(idPrefix))
+network.save('models/{}_model.h5'.format(idPrefix))
 
 decoded_quat = array(network.predict(trainingData))
 
