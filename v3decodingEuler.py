@@ -110,14 +110,14 @@ dataSplitPoint = int(len(qdata)*0.8)
 #validationData = array(qdata[dataSplitPoint:len(qdata)])
 trainingData = qdata
 
-network = load_model('data_rotation_cmu_Euler_full_j30_ws120_standardized_scaled1000_k15_hu256_vtq2_e600_d0.15_bz1_valtest0.2_model.h5')
+network = load_model('models/data_rotation_cmu_Euler_full_j30_ws120_standardized_scaled1000_k15_hu256_vtq2_e600_d0.15_bz1_valtest0.2_model.h5')
 
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('data_rotation_cmu_Euler_full_j30_ws120_standardized_scaled1000_k15_hu256_vtq2_e600_d0.15_bz1_valtest0.2_weigths.h5')
+network.load_weights('weights/data_rotation_cmu_Euler_full_j30_ws120_standardized_scaled1000_k15_hu256_vtq2_e600_d0.15_bz1_valtest0.2_weigths.h5')
 
 print('decoding...')
 
