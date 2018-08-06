@@ -21,7 +21,7 @@ np.set_printoptions(suppress=True,
 np.random.seed(0)
 
 version = "tq2"
-fileChanged = "cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1"
+fileChanged = "cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled10000000"
 
 print('started processing {}', fileChanged)
 X = np.load(fileChanged+".npz")['clips']
@@ -96,7 +96,7 @@ numpy_loss_history = np.array(val_loss_history)
 np.savetxt('results/{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
 
 
-network.save_weights('weigth/{}_weigths.h5'.format(idPrefix))
+network.save_weights('weigths/{}_weigths.h5'.format(idPrefix))
 network.save('models/{}_model.h5'.format(idPrefix))
 
 decoded_quat = array(network.predict(trainingData))
