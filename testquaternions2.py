@@ -72,7 +72,7 @@ network.add(Conv1D(degreesOFreedom, kernel_size, activation='linear', use_bias=T
 network.summary()
 
 
-epochs = 600
+epochs = 2
 
 network.compile(optimizer='adam', loss='mse')
 
@@ -101,7 +101,7 @@ np.savetxt('results/{}_lossHistory.txt'.format(idPrefix), numpy_loss_history, de
 numpy_loss_history = np.array(val_loss_history)
 np.savetxt('results/{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
 
-network.save_weights('weigths/{}_weigths.h5'.format(idPrefix))
+network.save_weights('weights/{}_weights.h5'.format(idPrefix))
 network.save('models/{}_model.h5'.format(idPrefix))
 
 decoded_quat = array(network.predict(trainingData))
