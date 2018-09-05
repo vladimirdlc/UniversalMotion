@@ -152,14 +152,34 @@ print(anim.rotations.shape)
 
 reformatRotations = []
 
-firstdec = True
+for frame in decoded:
+    joints = []
+    print(frame.shape)
+    i = 0
+    
+    for theta,z,y,x in zip(*[iter(frame)]*4):
+        z, y, x = eang.angle_axis2euler(theta, [x,y,z])
+        
+        joint = np.degrees([z,y,x]) #in z,y,x format
+        joints.append(joint)
+        print(joint)
+        i = i+1
+        #print('u')
+        #print(X[i])
+        
+    reformatRotations.append(joints)
+
+#inEulerDecodedRotMat
+reformatEulerDecodedAxA = np.array(reformatRotations)
+
+np.savetxt('QIn.txt', trainingData[0], delimiter=' ') 
 
 #decoding
 idx = 0
 
 outputList = []
 
-for frame in decoded:
+for frame in reformatEulerDecodedAxA:
     if idx != 0:
         file.write('\n')
     
@@ -168,15 +188,10 @@ for frame in decoded:
     
     frameLine = []
     
-    for theta,z,y,x in zip(*[iter(frame)]*4): #each joint
-        angleaxisq = Quaternions.from_angle_axis(theta, np.array([z,y,x]))
+    for joint in frame:
+        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
         
-        anim.rotations[idx][j] = angleaxisq
-
-    #for joint in frame:
-    #    anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
-        
-        #outputList.append(frameLine)
+        outputList.append(frameLine)
 
         j+=1
     idx+=1

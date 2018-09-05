@@ -96,7 +96,7 @@ numpy_loss_history = np.array(val_loss_history)
 np.savetxt('results/{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
 
 
-network.save_weights('weigths/{}_weigths.h5'.format(idPrefix))
+network.save_weights('weights/{}_weigths.h5'.format(idPrefix))
 network.save('models/{}_model.h5'.format(idPrefix))
 
 decoded_quat = array(network.predict(trainingData))
