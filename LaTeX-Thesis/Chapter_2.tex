@@ -62,7 +62,7 @@ It's a widely accepted format that due the simplicity of its structure can be us
 
 \subsection{Formats of Representation of Animation} \label{subsec:AnimationRepresentationFormats}
 
-Animation can be stored in different representation formats, each with different characteristics such as lenght of representation,  format or complexity of the data stored.
+Animation can be stored in different representation formats, each with different characteristics such as length of representation,  format or complexity of the data stored.
 
 Some of represented items are as follow:
 
@@ -101,9 +101,40 @@ Some of represented items are as follow:
 	
 	represents a rotation under a 3d space.
 	
-	\item  Quaternions
-	Quaternions is a very stable number system that extends complex numbers.
-	
 	\item  Euler Angles
+	
+	Using Euler's definition any rotation or sequence of rotations of a rigidbody or coordinate system  (x,y,z) about a fixed point is equivalent to a single rotation by a giving angle ($\theta$) about a fixed angle that runs throught a fixed point.
+	
+	The main disadvantage of euler angles are the gimbal lock singularities, when two axis get alligned, applying a rotation over a third axis may yield the same transformation as if it was applied over one of the angles previously allgned.
+	
+	\item  Quaternions
+	
+
+	Quaternions is a very stable number system that extends complex numbers.
+	The fundamental algebra of quaternions indicate that:
+	
+	\begin{equation}\label{equ:enc}
+	i^{2} = j^{2} = k^{2} = ijk = -1
+	\end{equation}
+	
+	They have the particular advantage over Euler angles that they avoid the problem of Gimbal lock, by definition they are normalized, and computationally they can be represented via a vector of 4 dimensions, therefore if representing a rotation can be defined that:	
+	
+	\begin{equation}\label{equ:enc}
+	q = cos({\theta} /2) + (x + y + z)*sin({\theta} /2)
+	\end{equation}
+	\begin{equation}\label{equ:enc}	
+	q = x + y + z + w
+	\end{equation}
+	
+	
+	\begin{equation}\label{equ:enc}
+	w = cos({\theta} /2)
+	\end{equation}
+	
+	
+	Where w is the {$\theta$} rotation angle around the axis of the quaternion.
+	
+	
+	
 	
 \end{itemize}
