@@ -89,7 +89,7 @@ def chunks(l, n):
 
 print('processing...')
 
-fileToDecode = 'cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1.npz'
+fileToDecode = 'cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled10000000.npz'
 
 X = np.load(fileToDecode)['clips']
 mean = np.load(fileToDecode)['mean']
@@ -107,14 +107,14 @@ dataSplitPoint = int(len(qdata)*0.8)
 
 trainingData = qdata
 
-network = load_model('models/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_model.h5')
+network = load_model('models/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled10000000_k15_hu256_vtq2_e600_d0.15_bz1_valtest0.2_model.h5')
 
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 #print(trainingData.shape)
 
-network.load_weights('weights/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled1_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_weigths.h5')
+network.load_weights('weights/cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled10000000_k15_hu256_vtq2_e600_d0.15_bz1_valtest0.2_weigths.h5')
 
 print('decoding...')
 
@@ -140,8 +140,8 @@ anim, names, frametime = BVH.load(mypath+folder+'/'+filename, order='zyx', world
 """ Convert to 60 fps (if using 60fps version) """
 #anim = anim[::2]
 
-rotations = anim.rotations[:,1:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
-print(rotations.shape)
+#rotations = anim.rotations[:,1:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
+#print(rotations.shape)
 reformatRotationsMatrix = []
 
 reformatEulerDecodedRotMat = []
@@ -149,36 +149,22 @@ reformatEulerDecodedRotMat = []
 for frame in decoded:
     joints = []
     jointsMatrix = []
-    first = True
-    second = True
     for mat in zip(*[iter(frame)]*9):
+        print(mat)
         mat /= scale
-        #print(mat.shape)
         m0 = np.array([mat[0], mat[1], mat[2]])
         m1 = np.array([mat[3], mat[4], mat[5]])
         m2 = np.array([mat[6], mat[7], mat[8]])
         m = [m0, m1, m2]
-        
+        print(m)
         print('real e:')
-        #print(np.degrees(rotations[0][1].euler())) 
         print('from m:')
         joint = eang.mat2euler(m) #in z,y,x rad format
-        print(joint)
-        print('new>', degrees(joint[0]), degrees(joint[1]), degrees(joint[2]))
-
-        jointsMatrix.append(normalize(joint))
+        jointsMatrix.append(joint)
         
-    #reformatRotations.append(joints)
     reformatEulerDecodedRotMat.append(jointsMatrix)
 
-#inEulerDecodedRotMat
 reformatEulerDecodedRotMat = np.array(reformatEulerDecodedRotMat)
-
-#print(">Decoded - RotationsEuler:")
-#print(np.square(mse(decodedlist, reformatRotationsEuler)))
-
-np.savetxt('QIn.txt', trainingData[0], delimiter=' ') 
-#np.savetxt('ScaledIn.txt', trainingData[0], delimiter=' ') 
 
 #decoding
 idx = 0
@@ -186,9 +172,6 @@ idx = 0
 outputList = []
 
 for frame in reformatEulerDecodedRotMat:
-    if idx != 0:
-        file.write('\n')
-    
     first = True
     second = True
     j = 1
@@ -196,27 +179,12 @@ for frame in reformatEulerDecodedRotMat:
     frameLine = []
     
     for joint in frame:
-        if first:
-            file.write('{0} {1} {2} '.format(rootPos[idx][0], rootPos[idx][1], rootPos[idx][2]))
-            file.write('{0} {1} {2} '.format(rootRot[idx][0], rootRot[idx][1], rootRot[idx][2]))
-            #frameLine.append(rootRot[idx])
-            first = False
-            continue
-        
-        quateu = np.degrees(np.array(joint*scale))
-        quateu = np.degrees(Quaternions.from_euler(np.array(joint*scale)).euler().ravel())
-        frameLine.append(joint*scale)
+        #if first:
+        #    first = False
+        #    continue
 
-        file.write('{0} {1} {2} '.format(joint[0], joint[1], joint[2])) #zyx
-        
-        #if j in rangedRotations:
-        #if j != 0:
         print(joint)
-        
         anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
-        
-        outputList.append(frameLine)
-
         j+=1
     idx+=1
 
