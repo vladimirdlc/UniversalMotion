@@ -806,9 +806,9 @@ def sanitizedInitGet(init):
 def sanitizedInitSer(init):
     if init in [sqrt_init]:
         return "sqrt_init"
-    elif init == "quaternion" or isinstance(init, QuaternionInit):
+    elif init == "quaternion": #or isinstance(init, QuaternionInit):
         return "quaternion"
-    elif init == "quaternion_independent" or isinstance(init, QuaternionIndependentFilters):
+    elif init == "quaternion_independent": #or isinstance(init, QuaternionIndependentFilters):
         return "quaternion_independent"
     else:
         return initializers.serialize(init)

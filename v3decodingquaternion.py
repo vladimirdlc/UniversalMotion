@@ -112,13 +112,13 @@ np.random.seed(0)
 # split into 80% for train and 20% for tests
 trainingData = qdata
 
-network = load_model('models/cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_model.h5')
+network = load_model('models/cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu60_vtq3_e600_d0.15_bz1_valtest0.2_activationrelu__QuatComplex_model.h5')
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('weights/cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_weigths.h5')
+network.load_weights('weights/cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu60_vtq3_e600_d0.15_bz1_valtest0.2_activationrelu_QuatComplex_weights.h5')
 
 print('decoding...')
 

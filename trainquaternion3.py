@@ -1,13 +1,14 @@
 import logging
 from os import listdir
 from os.path import isfile, join
+import argparse as Ap
 
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Conv1D, Dropout, MaxPooling1D, UpSampling1D, Activation
 from keras.models import Model, Sequential, model_from_json
 from sklearn.model_selection import train_test_split
 from numpy import array
 from plotCallback import PlotLoss
-
+from modelbase import *
 import numpy as np
 
 import math
@@ -26,28 +27,20 @@ def getArgParser():
     parser.add_argument("--lr",             default="0.001",      type=float)
     parser.add_argument("--model", "--m",   default="QCNN",       type=str,
             choices=["QCNN", "QDNN", "CNN", "DNN"])
-
+    parser.add_argument("--datadim0",             default="240",      type=int)
+    parser.add_argument("--datadim1",             default="4",      type=int)
+	
     args = parser.parse_args()
     return args
 
-
-params = getArgParser()
-
-#
-# CLASSIFIER
-#
-if(params.model in ['CNN' , 'QCNN']):
-    classifier = CNN(params)
-else:
-    classifier = DNN(params)
     
 np.set_printoptions(suppress=True,
    formatter={'float_kind':'{:0.2f}'.format})
    
 np.random.seed(0)
 
-version = "tq2"
-fileChanged = "cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000000000"
+version = "tq3"
+fileChanged = "cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000"
 
 print('started processing {}', fileChanged)
 X = np.load(fileChanged+".npz")['clips']
@@ -74,28 +67,70 @@ validationData = np.array(validationData)
 
 #print(validationData.shape)
 #print(testFile.shape)
-#network = Sequential()
+network = Sequential()
 degreesOFreedom = trainingData.shape[2] #joints * degreees of freedom
 windowSize = trainingData.shape[1] #temporal window 240 frames
 
-"""
 kernel_size = 15
 dropoutAmount = 0.15
-hiddenUnits = 256
+hiddenUnits = 60
 
 activationType = 'relu'
 
 network.add(Dropout(dropoutAmount, input_shape=(windowSize, degreesOFreedom)))
 
-network.add(Conv1D(hiddenUnits, kernel_size, activation=activationType, use_bias=True, padding='same'))
+'''network.add(Conv1D(hiddenUnits, kernel_size, use_bias=True,
+                 strides=1,
+                 padding='valid',
+                 data_format='channels_last',
+                 dilation_rate=1,
+                 activation=activationType,
+                 kernel_initializer='quaternion',
+                 bias_initializer='zeros',
+                 kernel_regularizer=None,
+                 bias_regularizer=None,
+                 activity_regularizer=None,
+                 kernel_constraint=None,
+                 bias_constraint=None,
+                 init_criterion='he',
+                 spectral_parametrization=False
+))'''
+
+network.add(QuaternionConv1D(hiddenUnits, kernel_size, strides=2, activation=activationType, use_bias=True, padding='same'))
 
 network.add(Dropout(dropoutAmount, input_shape=(windowSize, hiddenUnits)))
-network.add(Conv1D(degreesOFreedom, kernel_size, activation='linear', use_bias=True, padding='same'))
-"""
 
-epochs = 10
+network.add(UpSampling1D(2))
 
-network = CNN(params)
+network.add(QuaternionConv1D(30, kernel_size, strides=1, activation=activationType, use_bias=True, padding='same'))
+
+#network.add(QuaternionConv1D(hiddenUnits, kernel_size, strides=2, activation=activationType, use_bias=True, padding='same'))
+
+
+#network.add(QuaternionConv1D(hiddenUnits, kernel_size, strides=-2, activation='linear', use_bias=True, padding='same'))
+
+
+'''network.add(Conv1D(degreesOFreedom, kernel_size, use_bias=True,
+                 strides=1,
+                 padding='valid',
+                 data_format='channels_last',
+                 dilation_rate=1,
+                 activation='linear', #'linear'
+                 kernel_initializer='quaternion',
+                 bias_initializer='zeros',
+                 kernel_regularizer=None,
+                 bias_regularizer=None,
+                 activity_regularizer=None,
+                 kernel_constraint=None,
+                 bias_constraint=None,
+                 init_criterion='he',
+                 spectral_parametrization=False))
+'''
+
+network.summary()
+
+
+epochs = 600
 
 network.compile(optimizer='adam', loss='mse')
 
@@ -118,14 +153,15 @@ print('hu{}'.format(hiddenUnits))
 loss_history = history_callback.history["loss"]
 val_loss_history = history_callback.history["val_loss"]
 
-numpy_loss_history = np.array(loss_history)
-np.savetxt('results/{}_lossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
+
+23
+3
 
 numpy_loss_history = np.array(val_loss_history)
-np.savetxt('results/{}_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
+np.savetxt('results/{}_QuatComplex_valLossHistory.txt'.format(idPrefix), numpy_loss_history, delimiter=', ')
 
-network.save_weights('weights/{}_weights.h5'.format(idPrefix))
-network.save('models/{}_model.h5'.format(idPrefix))
+network.save_weights('weights/{}_QuatComplex_weights.h5'.format(idPrefix))
+network.save('models/{}__QuatComplex_model.h5'.format(idPrefix))
 
 decoded_quat = array(network.predict(trainingData))
 
@@ -134,3 +170,6 @@ print(np.square(np.subtract(trainingData, decoded_quat)).mean())
 
 print("finished")
 print(fileChanged)
+
+
+
