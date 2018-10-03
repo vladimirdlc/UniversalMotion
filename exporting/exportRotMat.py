@@ -3,13 +3,17 @@ import sys
 import numpy as np
 import scipy.io as io
 import scipy.ndimage.filters as filters
-import eulerangles as eang
-#sys.path.append('../../motion')
+
+sys.path.append('../../motion')
 import BVH as BVH
 import Animation as Animation
 from Quaternions import Quaternions
 from Pivots import Pivots
+from itertools import islice
+import eulerangles as eang
 
+
+import heapq
 """ hdm05 """
 class_map = {
     'cartwheelLHandStart1Reps': 'cartwheel',
@@ -177,19 +181,47 @@ def softmax(x, **kw):
 def softmin(x, **kw):
     return -softmax(-x, **kw)
 
-scale = 1
-
+def quat2euler(joint):
+    return Quaternions(joint).euler().ravel()
+    
+def euler2quat(joint):
+    return Quaternions.from_euler(joint).ravel()
+    
+def normalizeForNN(joint):
+    return (joint+1)/2
+    
+def denormalizeForNN(joint):
+    #denormalizing quaternions data from [0, 1] to [-1,1]
+    return (joint*2)-1
+    
+   
+scale = 1000000000
+    
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
     
     """ Convert to 60 fps """
-    anim = anim[::2]
+    #anim = anim[::2]
     
-    filename = '01_01.bvh'
-    anim, names, frametime = BVH.load(filename, order='zyx', world=False)    
-    count = 0
+    """ Do FK """
+    print(len(anim.rotations))
     
     """ Remove Uneeded Joints """
+	#exported
+    rotations = anim.rotations[:,1:len(anim.rotations)]
+    """ Remove Uneeded Joints """
+    #rotations = anim.rotations[:,np.array([
+    #     1,
+    #     2,  3,  4,  5,
+    #     7,  8,  9, 10,
+    #    12, 13, 15, 16,
+    #    18, 19, 20, 22,
+    #    25, 26, 27, 29])]
+
+    print(len(rotations))
+    """ Remove Uneeded Joints """
+    reformatRotations = []
+
     #encoding
     rotations = anim.rotations[:,1:len(anim.rotations)]
     """ Remove Uneeded Joints """
@@ -208,13 +240,13 @@ def process_file_rotations(filename, window=240, window_step=120):
 
     rotations = np.array(reformatRotations)
 
-    BVH.save("output.bvh", anim)
-    
     """ Slide over windows """
     windows = []
-    windows_classes = []    
-
+    windows_classes = []
+    
     for j in range(0, len(rotations)-window//8, window_step):
+        print(j)
+        #input(j)
         """ If slice too small pad out by repeating start and end poses """
         slice = rotations[j:j+window]
 
@@ -226,76 +258,143 @@ def process_file_rotations(filename, window=240, window_step=120):
         if len(slice) != window: raise Exception()
         
         windows.append(slice)
-        
+
     return windows
 
-def MSEConvertAndBackTest():
-    filename = '01_01.bvh'
-    anim, names, frametime = BVH.load(filename, order='zyx', world=False)    
-    count = 0
+    
+def process_file(filename, window=240, window_step=120):
+    
+    anim, names, frametime = BVH.load(filename)
+    
+    """ Convert to 60 fps """
+    anim = anim[::2]
+    
+    """ Do FK """
+    global_positions = Animation.positions_global(anim)
     
     """ Remove Uneeded Joints """
-    #encoding
-    rotations = anim.rotations[:,1:len(anim.rotations)]
-    """ Remove Uneeded Joints """
-    reformatRotations = []
+    positions = global_positions[:,np.array([
+         0,
+         2,  3,  4,  5,
+         7,  8,  9, 10,
+        12, 13, 15, 16,
+        18, 19, 20, 22,
+        25, 26, 27, 29])]
     
-    for frame in rotations:
-        joints = []
-
-        for joint in frame:
-            euler = Quaternions(joint).euler().ravel() #we get x,y,z
-            #eang library uses convention z,y,x
-            m = eang.euler2mat(euler[2], euler[1], euler[0])
-            input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
-            joints.append(input)
-
-        reformatRotations.append(joints)
-
-    rotations = np.array(reformatRotations)
-
-    reformatMatrixDecodedRotMat = []
+    print(positions.shape)
     
-    for frame in rotations:
-        joints = []
-        jointsMatrix = []
-        jointsToCompare = []
+    """ Put on Floor """
+    fid_l, fid_r = np.array([4,5]), np.array([8,9])
+    foot_heights = np.minimum(positions[:,fid_l,1], positions[:,fid_r,1]).min(axis=1)
+    floor_height = softmin(foot_heights, softness=0.5, axis=0)
+    
+    positions[:,:,1] -= floor_height
 
-        for mat in frame:
-            mat = np.array(mat)
-            m0 = np.array([mat[0], mat[1], mat[2]])
-            m1 = np.array([mat[3], mat[4], mat[5]])
-            m2 = np.array([mat[6], mat[7], mat[8]])
-            
-            input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
-            m = [m0, m1, m2]
-            
-            joint = eang.mat2euler(m) #in z,y,x rad format
-            jointsMatrix.append(joint)
-            jointsToCompare.append(input)
-            
-    reformatMatrixDecodedRotMat = np.array(jointsToCompare)
+    """ Add Reference Joint """
+    trajectory_filterwidth = 3
+    reference = positions[:,0] * np.array([1,0,1])
+    reference = filters.gaussian_filter1d(reference, trajectory_filterwidth, axis=0, mode='nearest')    
+    positions = np.concatenate([reference[:,np.newaxis], positions], axis=1)
+    
+    """ Get Foot Contacts """
+    velfactor, heightfactor = np.array([0.05,0.05]), np.array([3.0, 2.0])
+    
+    feet_l_x = (positions[1:,fid_l,0] - positions[:-1,fid_l,0])**2
+    feet_l_y = (positions[1:,fid_l,1] - positions[:-1,fid_l,1])**2
+    feet_l_z = (positions[1:,fid_l,2] - positions[:-1,fid_l,2])**2
+    feet_l_h = positions[:-1,fid_l,1]
+    feet_l = (((feet_l_x + feet_l_y + feet_l_z) < velfactor) & (feet_l_h < heightfactor)).astype(np.float)
+    
+    feet_r_x = (positions[1:,fid_r,0] - positions[:-1,fid_r,0])**2
+    feet_r_y = (positions[1:,fid_r,1] - positions[:-1,fid_r,1])**2
+    feet_r_z = (positions[1:,fid_r,2] - positions[:-1,fid_r,2])**2
+    feet_r_h = positions[:-1,fid_r,1]
+    feet_r = (((feet_r_x + feet_r_y + feet_r_z) < velfactor) & (feet_r_h < heightfactor)).astype(np.float)
+    
+    """ Get Root Velocity """
+    velocity = (positions[1:,0:1] - positions[:-1,0:1]).copy()
+    
+    """ Remove Translation """
+    positions[:,:,0] = positions[:,:,0] - positions[:,0:1,0]
+    positions[:,:,2] = positions[:,:,2] - positions[:,0:1,2]
+    
+    """ Get Forward Direction """
+    sdr_l, sdr_r, hip_l, hip_r = 14, 18, 2, 6
+    across1 = positions[:,hip_l] - positions[:,hip_r]
+    across0 = positions[:,sdr_l] - positions[:,sdr_r]
+    across = across0 + across1
+    across = across / np.sqrt((across**2).sum(axis=-1))[...,np.newaxis]
+    
+    direction_filterwidth = 20
+    forward = np.cross(across, np.array([[0,1,0]]))
+    forward = filters.gaussian_filter1d(forward, direction_filterwidth, axis=0, mode='nearest')    
+    forward = forward / np.sqrt((forward**2).sum(axis=-1))[...,np.newaxis]
 
-    print(">B[0]-Original[0]:")
-    print(np.square(np.subtract(reformatMatrixDecodedRotMat, rotations[0])).mean())
-    BVH.save("output.bvh", anim)
-
+    """ Remove Y Rotation """
+    target = np.array([[0,0,1]]).repeat(len(forward), axis=0)
+    rotation = Quaternions.between(forward, target)[:,np.newaxis]    
+    positions = rotation * positions
+    
+    """ Get Root Rotation """
+    velocity = rotation[1:] * velocity
+    rvelocity = Pivots.from_quaternions(rotation[1:] * -rotation[:-1]).ps
+    
+    """ Add Velocity, RVelocity, Foot Contacts to vector """
+    positions = positions[:-1]
+    positions = positions.reshape(len(positions), -1)
+    positions = np.concatenate([positions, velocity[:,:,0]], axis=-1)
+    positions = np.concatenate([positions, velocity[:,:,2]], axis=-1)
+    positions = np.concatenate([positions, rvelocity], axis=-1)
+    positions = np.concatenate([positions, feet_l, feet_r], axis=-1)
+        
+    """ Slide over windows """
+    windows = []
+    windows_classes = []
+    
+    for j in range(0, len(positions)-window//8, window_step):
+        """ If slice too small pad out by repeating start and end poses """
+        slice = positions[j:j+window]
+        if len(slice) < window:
+            left  = slice[:1].repeat((window-len(slice))//2 + (window-len(slice))%2, axis=0)
+            left[:,-7:-4] = 0.0
+            right = slice[-1:].repeat((window-len(slice))//2, axis=0)
+            right[:,-7:-4] = 0.0
+            slice = np.concatenate([left, slice, right], axis=0)
+        
+        if len(slice) != window: raise Exception()
+        
+        windows.append(slice)
+        
+        """ Find Class """
+        cls = -1
+        if filename.startswith('hdm05'):
+            cls_name = os.path.splitext(os.path.split(filename)[1])[0][7:-8]
+            cls = class_names.index(class_map[cls_name]) if cls_name in class_map else -1
+        if filename.startswith('styletransfer'):
+            cls_name = os.path.splitext(os.path.split(filename)[1])[0]
+            cls = np.array([
+                styletransfer_motions.index('_'.join(cls_name.split('_')[1:-1])),
+                styletransfer_styles.index(cls_name.split('_')[0])])
+        windows_classes.append(cls)
+        
+    return windows, windows_classes
+    
 def get_files(directory):
     return [os.path.join(directory,f) for f in sorted(list(os.listdir(directory)))
     if os.path.isfile(os.path.join(directory,f))
     and f.endswith('.bvh') and f != 'rest.bvh'] 
 
 cmu_files = get_files('cmu')
-data_clips = np.array(cmu_rot_clips)
-std = np.std(data_clips)
 
 cmu_rot_clips = []
 for i, item in enumerate(cmu_files):
     print('Processing Rotation %i of %i (%s)' % (i, len(cmu_files), item))
     clips = process_file_rotations(item)
     cmu_rot_clips += clips
+#   if i == 1: break
 
 data_clips = np.array(cmu_rot_clips)
+
 std = np.std(data_clips)
 
 print(std)
@@ -303,16 +402,3 @@ mean = np.mean(data_clips)
 data_clips -= mean
 data_clips /= std
 np.savez_compressed('data_rotation_cmu_exportRotMat_full_j30_ws120_standardized_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
-
-'''
-std = np.std(data_clips)
-print(std)
-mean = np.mean(data_clips)
-data_clips -= mean
-data_clips /= std
-np.savez_compressed('cmu_rotations_full_rotmat_30_standardized_w240_ws120_normalfps_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
-
-print(scale)
-
-
-'''
