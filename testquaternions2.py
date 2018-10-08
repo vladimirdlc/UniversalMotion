@@ -94,7 +94,7 @@ myadam = optimizers.adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, dec
 
 network.compile(optimizer=myadam, loss='mse')
 
-batch_size = 128
+batch_size = 64
 #network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
 idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_Deep_valtest0.2_activation{}'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size, activationType)

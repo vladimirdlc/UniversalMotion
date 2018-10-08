@@ -1,3 +1,5 @@
+This is the CMU parsed to reduce the amount of globalpos+joints from 31 to 21
+
         READMEFIRST v1.1, last update June 26, 2010 by B. Hahne
 
 This READMEFIRST file accompanies the second (2010)
