@@ -68,7 +68,7 @@ dropoutAmount = 0.15
 hiddenUnits = 256
 
 activationType = 'relu'
-'''
+
 network.add(Dropout(dropoutAmount, input_shape=(windowSize, degreesOFreedom)))
 
 network.add(Conv1D(hiddenUnits, kernel_size, activation=activationType, use_bias=True, padding='same'))
@@ -86,7 +86,7 @@ network.add(UpSampling1D(size=2))
 network.add(Dropout(rate=0.25,input_shape=(degreesOFreedom,hiddenUnits)))
 network.add(Conv1D(degreesOFreedom, (kernel_size,), activation=activationType, use_bias=True, padding='same'))
 network.summary()
-
+'''
 epochs = 600
 
 myadam = optimizers.adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
@@ -97,7 +97,7 @@ network.compile(optimizer=myadam, loss='mse')
 batch_size = 128
 #network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
-idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_Deep_valtest0.2_activation{}'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size, activationType)
+idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2_activation{}'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size, activationType)
 
 plot_losses = PlotLoss(epochs, 'results/'+idPrefix)
 

@@ -16,6 +16,8 @@ import math
 from math import radians, degrees
 import sys
 
+from utils import load_Model,F_extract
+
 from itertools import islice
 
 sys.path.insert(0, './motion')
@@ -86,18 +88,19 @@ def chunks(l, n):
         yield l[i:i + n]
 
 print('processing...')
-fileToDecode = 'cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000.npz' #'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
+fileToDecode = 'cmu_rotations_Quaternions_cmu_30_standardized_w240_ws120_normalfps_scaled1_240x73.npz'
+#data_cmu.npz' #
+#preprocess = np.load('ZMUV_locomotion.npz')
 
-np.set_printoptions(suppress=True)
-
-X = np.load(fileToDecode)['clips']
-mean = np.load(fileToDecode)['mean']
-std = np.load(fileToDecode)['std']
-scale = np.load(fileToDecode)['scale']
+X = np.load(fileToDecode)
+mean = X['mean']
+std = X['std']
+scale = X['scale']
+X = X['clips']
 
 print(X.shape)
 
-X = X.reshape(X.shape[0], X.shape[1], X.shape[2]*X.shape[3])
+#X = X.reshape(X.shape[0], X.shape[1], X.shape[2]*X.shape[3])
 
 qdata = np.array(X[0:200]) #extracting only the BVH section we want to test
 print(qdata.shape)
@@ -106,19 +109,18 @@ X = None
 
 dataSplitPoint = int(len(qdata)*0.2)
 
-#trainingData = array(qdata[dataSplitPoint:-1])
-#validationData = array(qdata[dataSplitPoint:len(qdata)])
 np.random.seed(0)
 # split into 80% for train and 20% for tests
 trainingData = qdata
 
-network = load_model('models/cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_activationrelu_model.h5')
+network = load_Model('.\\weights\\quat\\autoencoder_ND_quaternion') #AutoEncoder for decoding the motion in hidden space
+
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('weights/cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_activationrelu_weights.h5')
+#network.load_weights('weights/autoencoder_ND_weigths_quaternion.h5')
 
 print('decoding...')
 
@@ -145,15 +147,7 @@ BVH.save("original.bvh", anim)
 
 globalRot = anim.rotations[:,0:1]
 rotations = anim.rotations[:,1:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
-#rangedRotations = np.array([
-#     1,
-#     2,  3,  4,  5,
-#     7,  8,  9, 10,
-#    12, 13, 15, 16,
-#    18, 19, 20, 22,
-#    25, 26, 27, 29])
-#rotations = anim.rotations[:,1:]
-#globalRot = anim.rotations[:,0:1] 
+
 print(len(rotations))
 reformatRotations = []
 print(anim.rotations.shape)
@@ -202,37 +196,13 @@ for frame in decoded_quat[0]:
         #input("press key ")
     decodedlistNorm.append(frameList)
 
-decodedlistNorm = array(decodedlistNorm)
-
-print(">Diff dec[0] and Norm(B)")
-print(np.square(mse(decodedlistNorm, decoded_quat[0])))
-
-#print(">Norma(B)-R:")
-#print(np.square(mse(decodedlistNorm, rotationsA)))
-
-#np.savetxt('QIn.txt', trainingData[0], delimiter=' ') 
-#np.savetxt('QHat.txt', decoded_quat[0], delimiter=' ')
-#np.savetxt('QBar.txt', decodedlistNorm, delimiter=' ')  
-#np.savetxt('ScaledIn.txt', trainingData[0], delimiter=' ') 
-
-#decoding
-print(decoded_quat.shape)
-
-fullParsedQuat = []
-fullParsedEuler = []
-
 idx = 0
 
 decodedlistNorm = array(decodedlistNorm)
 
 for frame in decodedlistNorm:
-    if idx != 0:
-        file.write('\n')
-    
     first = True
     j = 1
-    
-    frameLine = []
     
     for joint in chunks(frame, 4):
 
@@ -241,16 +211,8 @@ for frame in decodedlistNorm:
         j+=1
     idx+=1
 
-#print(outputList[0])
-outputList = array(outputList)
-print("first shape")
-print(outputList.shape)
-outputList = outputList.reshape(outputList.shape[0], outputList.shape[1]*outputList.shape[2])
-print("second shape")
-print(outputList.shape)
-
-print("output list shape:")
-print(outputList.shape)
+print(">Diff dec[0] and Norm(B)")
+print(np.square(mse(decodedlistNorm, decoded_quat[0])))
 #print(outputList[0].shape)
 
 
