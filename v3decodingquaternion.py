@@ -24,48 +24,6 @@ import BVH as BVH
 import Animation as Animation
 from Quaternions import Quaternions
 
-def extractBVHGlobals(fullPath):
-    print("Processing... "+fullPath)
-
-    file = open(fullPath, 'r')
-    print("opened")
-
-    data = []
-    frameDataStart = False
-
-    for line in file:
-        line = line.strip()
-        if not line: continue
-
-        if line.startswith('Frame '):
-            frameDataStart = True
-            continue
-        if frameDataStart:
-            data.append(line)
-
-    rootPos = []
-    rootRot = []
-    localsRot = []
-
-    for currentFrame in data:
-        quaternionData = []
-        floats = [float(x) for x in currentFrame.split()]
-        first = True
-        second = True
-        
-        for x,y,z in zip(*[iter(floats)]*3):
-            if first:
-                rootPos.append((x,y,z))
-                first = False
-            else:
-                if second:
-                    rootRot.append((x,y,z))
-                    second = False
-                localsRot.append((x,y,z))
-                
-    file.close()
-    return rootPos, rootRot, localsRot
-    
 def mse(a, b):
     return np.square(np.subtract(a, b)).mean()
     
@@ -112,13 +70,13 @@ np.random.seed(0)
 # split into 80% for train and 20% for tests
 trainingData = qdata
 
-network = load_model('models/cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_activationrelu_model.h5')
+network = load_model('models/cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq2_e600_d0.15_bz128_classic_valtest0.2_activationrelu_model.h5')
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('weights/cmu_rotations_full_cmu_30_standardized_w240_ws120_normalfps_scaled1000_k15_hu256_vtq2_e600_d0.15_bz16_valtest0.2_activationrelu_weights.h5')
+network.load_weights('weights/cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq2_e600_d0.15_bz128_classic_valtest0.2_activationrelu_weights.h5')
 
 print('decoding...')
 
@@ -128,23 +86,20 @@ print(">MSE I/O NN Q <> QHat:")
 print(mse(trainingData, decoded_quat))
 
 mypath = 'data/decoding/'
-file = open(mypath+'output.txt', 'w')
 
 onlyfolders = [f for f in listdir(mypath) if not isfile(join(mypath, f))]
 folder = onlyfolders[0]
 onlyfiles = [f for f in listdir(mypath+folder) if isfile(join(mypath+folder, f))]
 filename = onlyfiles[0]
-rootPos, rootRot, localsRot = extractBVHGlobals(mypath+folder+'/'+filename)
 
 anim, names, frametime = BVH.load(mypath+folder+'/'+filename, order='zyx', world=False)
 
+BVH.save('original.bvh', anim)
+
 """ Convert to 60 fps """
-#anim = anim[::2]
-BVH.save("original.bvh", anim)
 
-
-globalRot = anim.rotations[:,0:1]
-rotations = anim.rotations[:,1:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
+#globalRot = anim.rotations[:,0:1]
+rotations = anim.rotations[:,0:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
 #rangedRotations = np.array([
 #     1,
 #     2,  3,  4,  5,
@@ -154,37 +109,8 @@ rotations = anim.rotations[:,1:len(anim.rotations)] #1:len(anim.rotations) to av
 #    25, 26, 27, 29])
 #rotations = anim.rotations[:,1:]
 #globalRot = anim.rotations[:,0:1] 
-print(len(rotations))
-reformatRotations = []
-print(anim.rotations.shape)
-reformatRotationsEuler = []
-
-for frame in rotations:
-    joints = []
-    jointsEuler = []
-    
-    for joint in frame:
-        joints.append(joint)
-        jointsEuler.append(Quaternions(joint).euler().ravel())
-        
-    reformatRotations.append(joints)
-    reformatRotationsEuler.append(jointsEuler)
-
-reformatRotationsEuler = np.array(reformatRotationsEuler)
-rotationsA = np.array(reformatRotations)
 
 print(anim.rotations.shape)
-
-rotationsA = rotationsA.reshape(rotationsA.shape[0], rotationsA.shape[1]*rotationsA.shape[2])[0:trainingData[0].shape[0]]
-reformatRotationsEuler = reformatRotationsEuler.reshape(reformatRotationsEuler.shape[0], reformatRotationsEuler.shape[1]*reformatRotationsEuler.shape[2])[0:trainingData[0].shape[0]]
-print(rotations.shape)
-#print(">A-R:")
-#print(np.square(mse(trainingData[0], rotationsA)))
-
-#print(">B-R:")
-#print(np.square(mse(decoded_quat[0], rotationsA)))
-#print(decoded_quat[0].shape)
-#print(rotationsA.shape)
 
 decoded_quat = ((decoded_quat*std)+mean)
 
@@ -195,6 +121,7 @@ decodedlistNorm = []
 for frame in decoded_quat[0]:
     frameList = []
     for joint in chunks(frame, 4):
+
         decodedj = normalize(joint*scale)
         frameList.extend(decodedj)
         #print(decodedj)
@@ -218,17 +145,14 @@ print(np.square(mse(decodedlistNorm, decoded_quat[0])))
 #decoding
 print(decoded_quat.shape)
 
-fullParsedQuat = []
+fullParsedQuat = []  
 fullParsedEuler = []
 
 idx = 0
 
 decodedlistNorm = array(decodedlistNorm)
 
-for frame in decodedlistNorm:
-    if idx != 0:
-        file.write('\n')
-    
+for frame in decodedlistNorm:    
     first = True
     j = 1
     
@@ -241,31 +165,11 @@ for frame in decodedlistNorm:
         j+=1
     idx+=1
 
-#print(outputList[0])
-outputList = array(outputList)
-print("first shape")
-print(outputList.shape)
-outputList = outputList.reshape(outputList.shape[0], outputList.shape[1]*outputList.shape[2])
-print("second shape")
-print(outputList.shape)
-
-print("output list shape:")
-print(outputList.shape)
-#print(outputList[0].shape)
-
-
 BVH.save("output.bvh", anim)
 
-fileName = file.name
-file.close()
 
 #print(outputList[0:reformatRotationsEuler.shape[0]])
 #print(reformatRotationsEuler)
-
-arrayOut = []
-
-with open(fileName) as file:
-    arrayOut = [[float(digit) for digit in line.split()[5:-1]] for line in file] #3:-1 remove position
 
 #print(">Manual-R:")
 #print(np.square(mse(arrayOut[:][:], reformatRotationsEuler)))
