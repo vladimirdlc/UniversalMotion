@@ -3,6 +3,7 @@ from os import listdir
 from os.path import isfile, join
 
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Conv1D, Dropout, MaxPooling1D, UpSampling1D, Activation
+from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Conv1D, Dropout, MaxPooling1D, UpSampling1D, Activation
 from keras.models import Model, Sequential, model_from_json
 from keras import optimizers
 from sklearn.model_selection import train_test_split
