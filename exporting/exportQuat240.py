@@ -280,10 +280,16 @@ def get_files(directory):
 cmu_files = get_files('cmu')
 
 cmu_rot_clips = []
+filesidx = {}
+idx = 0
+
 for i, item in enumerate(cmu_files):
     print('Processing Rotation %i of %i (%s)' % (i, len(cmu_files), item))
     clips = process_file_rotations(item)
     cmu_rot_clips += clips
+    filename = item.replace('cmu\\', '').replace('.bvh', '') #remove folder ext from keys
+    print(filename)
+    filesidx[filename] = {'startidx': idx, 'endidx': idx+len(clips)}
 #   if i == 1: break
 
 
@@ -294,7 +300,7 @@ print(std)
 mean = np.mean(data_clips)
 data_clips -= mean
 data_clips /= std
-np.savez_compressed('cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled{}'.format(scale), clips=data_clips, std=std, mean=mean, scale=scale)
+np.savez_compressed('cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled{}'.format(scale), filesinfo=filesidx, clips=data_clips, std=std, mean=mean, scale=scale)
 
 print(scale)
 #np.savez_compressed('cmu_rotations_2samples_j30_w240_ws60_standardized_scaled10000', clips=data_clips, std=std, mean=mean, scale=scale)
