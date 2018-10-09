@@ -291,7 +291,6 @@ for i, item in enumerate(cmu_files):
     filename = item.replace('cmu\\', '').replace('.bvh', '') #remove folder ext from keys
     print(filename)
     filesidx[filename] = {'startidx': idx, 'endidx': idx+len(clips)}
-    data_clips = np.array(cmu_rot_clips)
 #   if i == 1: break
 
 
