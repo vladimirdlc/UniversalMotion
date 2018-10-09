@@ -201,6 +201,7 @@ def process_file_rotations(filename, window=240, window_step=120):
 
     """ Convert to 60 fps """
     #anim = anim[::2]
+    
     '''anim = anim[:,np.array([
          0,
          2,  3,  4,  5,
@@ -290,6 +291,7 @@ for i, item in enumerate(cmu_files):
     filename = item.replace('cmu\\', '').replace('.bvh', '') #remove folder ext from keys
     print(filename)
     filesidx[filename] = {'startidx': idx, 'endidx': idx+len(clips)}
+    data_clips = np.array(cmu_rot_clips)
 #   if i == 1: break
 
 
