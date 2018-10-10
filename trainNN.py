@@ -32,8 +32,9 @@ np.set_printoptions(suppress=True,
    formatter={'float_kind':'{:0.2f}'.format})
 np.random.seed(0)
 
-version = "tq2"
-fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000"
+version = "tq3"
+fileChanged = "data_cmu_rAxisAngle_full_j20_ws240x120_standardized_scaled10000000"
+#fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000"
 
 print('started processing {}', fileChanged)
 X = np.load(fileChanged+".npz")['clips']

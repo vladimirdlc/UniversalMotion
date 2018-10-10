@@ -194,7 +194,7 @@ def denormalizeForNN(joint):
     return (joint*2)-1
     
   
-scale = 1000
+scale = 10000000
     
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')

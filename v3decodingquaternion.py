@@ -43,40 +43,51 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
+filename = '105_03_parsed'
+fulpath = 'data/decoding/'+filename+'.bvh'
+
 print('processing...')
 fileToDecode = 'cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000.npz' #'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
 
 np.set_printoptions(suppress=True)
 
-X = np.load(fileToDecode)['clips']
-mean = np.load(fileToDecode)['mean']
-std = np.load(fileToDecode)['std']
-scale = np.load(fileToDecode)['scale']
+X = np.load(fileToDecode)
+mean = X['mean']
+std = X['std']
+scale = X['scale']
+startidx = X['filesinfo'].item()[filename]['startidx']
+endidx = X['filesinfo'].item()[filename]['endidx']
 
+print(X['filesinfo'])
+print(startidx)
+print(endidx)
+
+print('\n')
+#print(a.shape)
+#startidx = X['filesinfo'][filename, 'startidx']
+#endidx = X['filesinfo'][filename, 'endidx']
+
+X = np.load(fileToDecode)['clips']
 print(X.shape)
 
 X = X.reshape(X.shape[0], X.shape[1], X.shape[2]*X.shape[3])
 
-qdata = np.array(X[0:200]) #extracting only the BVH section we want to test
+qdata = np.array(X[startidx:endidx]) #extracting only the BVH section we want to test
 print(qdata.shape)
 
 X = None
 
-dataSplitPoint = int(len(qdata)*0.2)
-
-#trainingData = array(qdata[dataSplitPoint:-1])
-#validationData = array(qdata[dataSplitPoint:len(qdata)])
 np.random.seed(0)
 # split into 80% for train and 20% for tests
 trainingData = qdata
 
-network = load_model('models/cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq2_e600_d0.15_bz128_classic_valtest0.2_activationrelu_model.h5')
+network = load_model('models/cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq2_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 print(trainingData.shape)
 
-network.load_weights('weights/cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq2_e600_d0.15_bz128_classic_valtest0.2_activationrelu_weights.h5')
+network.load_weights('weights/cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq2_e600_d0.15_bz128_akwdata_valtest0.2_activationrelu_weights.h5')
 
 print('decoding...')
 
@@ -85,14 +96,7 @@ decoded_quat = array(network.predict(trainingData))
 print(">MSE I/O NN Q <> QHat:")
 print(mse(trainingData, decoded_quat))
 
-mypath = 'data/decoding/'
-
-onlyfolders = [f for f in listdir(mypath) if not isfile(join(mypath, f))]
-folder = onlyfolders[0]
-onlyfiles = [f for f in listdir(mypath+folder) if isfile(join(mypath+folder, f))]
-filename = onlyfiles[0]
-
-anim, names, frametime = BVH.load(mypath+folder+'/'+filename, order='zyx', world=False)
+anim, names, frametime = BVH.load(fulpath, order='zyx', world=False)
 
 BVH.save('original.bvh', anim)
 
@@ -100,15 +104,6 @@ BVH.save('original.bvh', anim)
 
 #globalRot = anim.rotations[:,0:1]
 rotations = anim.rotations[:,0:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
-#rangedRotations = np.array([
-#     1,
-#     2,  3,  4,  5,
-#     7,  8,  9, 10,
-#    12, 13, 15, 16,
-#    18, 19, 20, 22,
-#    25, 26, 27, 29])
-#rotations = anim.rotations[:,1:]
-#globalRot = anim.rotations[:,0:1] 
 
 print(anim.rotations.shape)
 
@@ -159,7 +154,6 @@ for frame in decodedlistNorm:
     frameLine = []
     
     for joint in chunks(frame, 4):
-
         #if j in rangedRotations:
         anim.rotations[idx][j] = Quaternions(joint)
         j+=1
