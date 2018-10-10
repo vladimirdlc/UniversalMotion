@@ -122,7 +122,7 @@ def process_file_rotations(filename, window=240, window_step=240):
     return windows
 
 
-filename = '144_07_parsed'
+filename = '144_21_parsed_noisy'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
@@ -134,12 +134,10 @@ X = np.load(fileToDecode)
 mean = X['mean']
 std = X['std']
 scale = X['scale']
-startidx = X['filesinfo'].item()[filename]['startidx']
-endidx = X['filesinfo'].item()[filename]['endidx']
+#startidx = X['filesinfo'].item()[filename]['startidx']
+#endidx = X['filesinfo'].item()[filename]['endidx']
 
 print(X['filesinfo'])
-print(startidx)
-print(endidx)
 
 print('\n')
 # print(a.shape)
@@ -206,6 +204,8 @@ rotations = (((decoded_quat)*std)+mean)/scale
 
 print(anim.rotations.shape)
 
+useHipsIdentity = False #useful for denoising
+
 idx = 0
 
 #go by all windows 240
@@ -219,6 +219,10 @@ for wdw in rotations:
 
         frameLine = []
         for joint in chunks(frame, 4):
+            if first and useHipsIdentity:
+                anim.rotations[idx][0] = Quaternions(np.array([1,0,0,0]))
+                first = False
+
             # if j in rangedRotations:
             anim.rotations[idx][j] = Quaternions(joint)
             j += 1
