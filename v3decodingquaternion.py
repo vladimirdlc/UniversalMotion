@@ -1,3 +1,7 @@
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 from os import listdir
 from os.path import isfile, join
 
@@ -81,7 +85,7 @@ def process_file_rotations(filename, window=240, window_step=240):
 
     """ Remove Uneeded Joints """
     # exported
-    rotations = anim.rotations[:, 1:len(anim.rotations)]
+    rotations = anim.rotations[:, 0:len(anim.rotations)]
 
     print(len(rotations))
     """ Remove Uneeded Joints """
@@ -126,7 +130,7 @@ filename = '144_21_parsed_noisy'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
-fileToDecode = 'cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000.npz'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
+fileToDecode = 'cmu_rotations_Quat_cmu_20_standardized_w60x30_normalfps_scaled1000.npz'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
 
 np.set_printoptions(suppress=True)
 
@@ -144,7 +148,7 @@ print('\n')
 # startidx = X['filesinfo'][filename, 'startidx']
 # endidx = X['filesinfo'][filename, 'endidx']
 
-X = np.load(fileToDecode)['clips']
+X = np.array(np.load(fileToDecode)['clips'])
 
 #X = X.reshape(X.shape[0], X.shape[1], X.shape[2] * X.shape[3])
 
@@ -155,12 +159,12 @@ np.random.seed(0)
 # split into 80% for train and 20% for tests
 
 network = load_model(
-    'models/cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq2_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
+    'models/cmu_rotations_Quat_cmu_20_standardized_w60x30_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 network.load_weights(
-    'weights/cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq2_e600_d0.15_bz128_akwdata_valtest0.2_activationrelu_weights.h5')
+    'weights/cmu_rotations_Quat_cmu_20_standardized_w60x30_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
 
 print('decoding...')
 
@@ -174,7 +178,7 @@ BVH.save('original.bvh', anim)
 """ Convert to 60 fps """
 
 # globalRot = anim.rotations[:,0:1]
-rotations = anim.rotations[:, 1:len(anim.rotations)]  # 1:len(anim.rotations) to avoid glogal rotation
+rotations = anim.rotations[:, 0:len(anim.rotations)]  # 1:len(anim.rotations) to avoid glogal rotation
 
 print(len(rotations))
 """ Remove Uneeded Joints """
@@ -192,7 +196,7 @@ for frame in rotations:
 
 reformatRotations = np.array(reformatRotations)
 
-X = process_file_rotations(fullPathAnim)
+X = process_file_rotations(fullPathAnim, window=X.shape[1], window_step=int(X.shape[1]/2))
 X = np.array(X)
 X -= mean
 X /= std
@@ -204,7 +208,7 @@ rotations = (((decoded_quat)*std)+mean)/scale
 
 print(anim.rotations.shape)
 
-useHipsIdentity = False #useful for denoising
+useHipsIdentity = False #useful for denoising or using original
 
 idx = 0
 
@@ -215,12 +219,12 @@ for wdw in rotations:
             break
 
         first = True
-        j = 1
+        j = 0
 
         frameLine = []
         for joint in chunks(frame, 4):
             if first and useHipsIdentity:
-                anim.rotations[idx][0] = Quaternions(np.array([1,0,0,0]))
+                #anim.rotations[idx][0] = Quaternions(np.array([1,0,0,0]))
                 first = False
 
             # if j in rangedRotations:

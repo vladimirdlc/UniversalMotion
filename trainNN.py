@@ -33,7 +33,8 @@ np.set_printoptions(suppress=True,
 np.random.seed(0)
 
 version = "tq3"
-fileChanged = "data_cmu_rAxisAngle_full_j20_ws240x120_standardized_scaled10000000"
+fileChanged = "data_cmu_RotMat_full_j20_ws60x30_standardized_scaled10000000"
+#fileChanged = "data_cmu_RotMat_full_j20_ws240x120_standardized_scaled10000000"
 #fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000"
 
 print('started processing {}', fileChanged)
