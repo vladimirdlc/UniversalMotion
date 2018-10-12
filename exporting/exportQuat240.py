@@ -194,7 +194,7 @@ def denormalizeForNN(joint):
     return (joint*2)-1
     
   
-scale = 10000000
+scale = 1000
     
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
@@ -229,7 +229,7 @@ def process_file_rotations(filename, window=240, window_step=120):
     
     """ Remove Uneeded Joints """
 	#exported
-    rotations = anim.rotations[:,1:len(anim.rotations)]
+    rotations = anim.rotations[:,0:len(anim.rotations)]
 
     print(len(rotations))
     """ Remove Uneeded Joints """
@@ -283,33 +283,33 @@ cmu_files = get_files('cmu')
 cmu_rot_clips = []
 filesidx = {}
 idx = 0
+wdw = 240
+step = 120
 
 for i, item in enumerate(cmu_files):
     print('Processing Rotation %i of %i (%s)' % (i, len(cmu_files), item))
-    clips = process_file_rotations(item)
+    clips = process_file_rotations(item, window=wdw, window_step=step)
+    #if len(clips) < step:
+    #    continue
+
     cmu_rot_clips += clips
     filename = item.replace('cmu\\', '').replace('.bvh', '') #remove folder ext from keys
     print(filename)
-    filesidx[filename] = {'startidx': idx, 'endidx': idx+len(clips)}
-#   if i == 1: break
-
+    #data_clips = np.array(cmu_rot_clips)
+    # if i == 1: break
 
 data_clips = np.array(cmu_rot_clips)
+print(data_clips.shape)
 
 std = np.std(data_clips)
 print(std)
 mean = np.mean(data_clips)
 data_clips -= mean
 data_clips /= std
-np.savez_compressed('cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled{}'.format(scale), filesinfo=filesidx, clips=data_clips, std=std, mean=mean, scale=scale)
+np.savez_compressed('cmu_rotations_Quat_cmu_20_standardized_w{}_w{}_normalfps_scaled{}'.format(wdw, step, scale), filesinfo=filesidx, clips=data_clips, std=std, mean=mean, scale=scale)
+#np.savez_compressed('cmu_rotations_Quat_cmu_20_standardized_w480_ws240_normalfps_scaled{}'.format(scale), filesinfo=filesidx, clips=data_clips, std=std, mean=mean, scale=scale)
 
 print(scale)
-#np.savez_compressed('cmu_rotations_2samples_j30_w240_ws60_standardized_scaled10000', clips=data_clips, std=std, mean=mean, scale=scale)
-#std = np.std(data_clips)
-#mean = np.mean(data_clips)
-#data_clips = (data_clips - mean) / std
-#np.savez_compressed('cmu_rotations_full_30_normalizedwxyz', clips=data_clips, stdw=stdw, meanw=meanw, stdx=stdx, meanx=meanx, stdy=stdy, meany=meany, stdz=stdz, meanz=meanz)
-#by channels
 '''
 cmu_rot_clips = []
 for i, item in enumerate(cmu_files):
