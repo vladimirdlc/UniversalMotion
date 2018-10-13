@@ -101,14 +101,31 @@ def process_file_rotations(filename, window=240, window_step=240):
 
         reformatRotations.append(joints)
 
-    rotations = np.array(reformatRotations)
 
+    rotations = np.array(reformatRotations)
+    rotations = rotations.reshape(rotations.shape[0], rotations.shape[1]*rotations.shape[2])
+
+    #    (2448, 21, 4) -> (2448, 84)
     print(rotations.shape)
 
     """ Slide over windows """
     windows = []
-    windows_classes = []
+    partition = []
 
+    for rot in rotations:
+        partition.append(rot)
+        if len(partition) >= window:
+            windows.append(partition)
+            partition = []
+
+
+    #print(np.array(windows).shape)
+    #print(windows.shape)
+
+    #for j in range(0, len(rotations)) :
+
+
+    '''
     for j in range(0, len(rotations) - window // 8, window_step):
         # input(j)
         """ If slice too small pad out by repeating start and end poses """
@@ -122,15 +139,19 @@ def process_file_rotations(filename, window=240, window_step=240):
         if len(slice) != window: raise Exception()
 
         windows.append(slice)
-
+    '''
     return windows
 
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
-filename = '144_21_parsed_noisy'
+filename = 'parsed_144_21_45d'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
-fileToDecode = 'cmu_rotations_Quat_cmu_20_standardized_w60x30_normalfps_scaled1000.npz'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
+fileToDecode = 'cmu_rotations_Quat_cmu_21_standardized_w480_ws240_normalfps_scaled1000.npz'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
 
 np.set_printoptions(suppress=True)
 
@@ -159,12 +180,12 @@ np.random.seed(0)
 # split into 80% for train and 20% for tests
 
 network = load_model(
-    'models/cmu_rotations_Quat_cmu_20_standardized_w60x30_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
+    'models/cmu_rotations_Quat_cmu_21_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 network.load_weights(
-    'weights/cmu_rotations_Quat_cmu_20_standardized_w60x30_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
+    'weights/cmu_rotations_Quat_cmu_21_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
 
 print('decoding...')
 
@@ -196,16 +217,17 @@ for frame in rotations:
 
 reformatRotations = np.array(reformatRotations)
 
-X = process_file_rotations(fullPathAnim, window=X.shape[1], window_step=int(X.shape[1]/2))
-X = np.array(X)
+X = process_file_rotations(fullPathAnim, window=X.shape[1], window_step=X.shape[1])
+X = np.array(list(X))
+print(X.shape)
 X -= mean
 X /= std
-X = X.reshape(X.shape[0], X.shape[1], X.shape[2] * X.shape[3])
+#X = X.reshape(X.shape[0], X.shape[1], X.shape[2] * X.shape[3])
 
 decoded_quat = array(network.predict(X))
 
 rotations = (((decoded_quat)*std)+mean)/scale
-
+print(rotations[0])
 print(anim.rotations.shape)
 
 useHipsIdentity = False #useful for denoising or using original
@@ -217,17 +239,10 @@ for wdw in rotations:
     for frame in wdw:
         if idx >= anim.rotations.shape[0]:
             break
-
-        first = True
         j = 0
 
         frameLine = []
         for joint in chunks(frame, 4):
-            if first and useHipsIdentity:
-                #anim.rotations[idx][0] = Quaternions(np.array([1,0,0,0]))
-                first = False
-
-            # if j in rangedRotations:
             anim.rotations[idx][j] = Quaternions(joint)
             j += 1
         idx += 1
