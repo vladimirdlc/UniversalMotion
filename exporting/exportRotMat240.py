@@ -223,7 +223,7 @@ def process_file_rotations(filename, window=240, window_step=120):
     reformatRotations = []
 
     #encoding
-    rotations = anim.rotations[:,1:len(anim.rotations)]
+    rotations = anim.rotations[:,0:len(anim.rotations)]
     """ Remove Uneeded Joints """
     reformatRotations = []
     
@@ -296,4 +296,4 @@ print(std)
 mean = np.mean(data_clips)
 data_clips -= mean
 data_clips /= std
-np.savez_compressed('cmu_rotations_RotMat_cmu_20_standardized_w{}_ws{}_normalfps_scaled{}'.format(wdw, step, scale), filesinfo=filesidx, clips=data_clips, std=std, mean=mean, scale=scale)
+np.savez_compressed('cmu_rotations_RotMat_cmu_{}_standardized_w{}_ws{}_normalfps_scaled{}'.format(data_clips.shape[2], wdw, step, scale), filesinfo=filesidx, clips=data_clips, std=std, mean=mean, scale=scale)
