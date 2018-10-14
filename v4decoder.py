@@ -10,7 +10,7 @@ from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Conv1
 from keras.models import Model, Sequential, model_from_json, load_model
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
-
+import eulerangles as eang
 from numpy import array
 import numpy as np
 import csv
@@ -78,6 +78,12 @@ def process_file_rotations(filename, window=240, window_step=240):
                 joints.append(joint * scale)
             elif decodeType is Decoder.EULER:
                 joints.append(Quaternions(joint).euler().ravel() * scale)
+            elif decodeType is Decoder.AXIS_ANGLE:
+                angle, axis = Quaternions(joint).angle_axis()
+                input = axis.flatten()
+                input = np.insert(input, 0, angle)
+                input = np.array(input)  # 4 values
+                joints.append(input * scale)
 
         reformatRotations.append(joints)
 
@@ -105,22 +111,23 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
-decodeType = Decoder.EULER
-
-filename = '144_21_parsed' #filename = 'original_144_21_45d'
+filename = '144_21_parsed'
+#filename = 'original_144_21_45d'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
-fileToDecode = 'cmu_Euler_21_standardized_w240_ws120_normalfps_scaled1000'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
 
 np.set_printoptions(suppress=True)
 
+
+decodeType = Decoder.AXIS_ANGLE
+fileToDecode = 'cmu_AxisAngle_21_ws240_w120_standardized_scaled10000000'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
 X = np.load(fileToDecode+'.npz')
 mean = X['mean']
 std = X['std']
 scale = X['scale']
 
-print(X['filesinfo'])
+#print(X['filesinfo'])
 print('\n')
 
 X = np.array(np.load(fileToDecode+'.npz')['clips'])
@@ -165,6 +172,12 @@ for frame in rotations:
             joints.append(joint * scale)
         elif decodeType is Decoder.EULER:
             joints.append(Quaternions(joint).euler().ravel()*scale)
+        elif decodeType is Decoder.AXIS_ANGLE:
+            angle, axis = Quaternions(joint).angle_axis()
+            input = axis.flatten()
+            input = np.insert(input, 0, angle)
+            input = np.array(input) #4 values
+            joints.append(input*scale)
 
     reformatRotations.append(joints)
 
@@ -203,6 +216,12 @@ for wdw in rotations:
             elif decodeType is Decoder.EULER:
                 joint = [joint[2], joint[1], joint[0]]
                 anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
+            elif decodeType is Decoder.AXIS_ANGLE:
+                z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #theta, x, y, z
+
+                joint = np.degrees([z, y, x])  # in z,y,x format
+                joints.append(joint)
+                print(joint)
             j += 1
         idx += 1
 

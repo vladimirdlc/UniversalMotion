@@ -33,7 +33,9 @@ np.set_printoptions(suppress=True,
 np.random.seed(0)
 
 version = "tq3"
-fileChanged = "data_cmu_RotMat_full_j20_ws60x30_standardized_scaled10000000"
+fileChanged = "cmu_RotMat_cmu_21_standardized_w240_ws120_normalfps_scaled10000000"
+
+#fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w8_ws4_normalfps_scaled1000"
 #fileChanged = "data_cmu_RotMat_full_j20_ws240x120_standardized_scaled10000000"
 #fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000"
 
@@ -49,14 +51,13 @@ X = None
 
 # split into 80% for train and 20% for test
 #trainingData = qdata
-trainingData, validationData = train_test_split(qdata[1:-1], test_size=0.2)
-dataSplitPoint = int(len(qdata)*0.2)
+trainingData, validationData = train_test_split(qdata, test_size=0.2)
 
 #validationData = array(qdata[0:dataSplitPoint])
 #trainingData = array(qdata[0,dataSplitPoint:-1])
-validationData = validationData.tolist()
-validationData.append(qdata[0])
-validationData = np.array(validationData)
+#validationData = validationData.tolist()
+#validationData.append(qdata[0])
+#validationData = np.array(validationData)
 #trainingData = qdata
 #testData = testData.reshape([], testData.shape[0], testData.shape[1])
 

@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from IPython.display import clear_output
 
 class PlotLoss(keras.callbacks.Callback):
-    ymax = 0.2
+    ymax = 0.025
     ymin = 0.0
 
     def __init__(self, epochs=-1, path=""):

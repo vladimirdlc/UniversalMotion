@@ -57,29 +57,6 @@ def process_file_rotations(filename, window=240, window_step=240):
 
     """ Convert to 60 fps """
     # anim = anim[::2]
-
-    '''anim = anim[:,np.array([
-         0,
-         2,  3,  4,  5,
-         7,  8,  9, 10,
-        12, 13, 15, 16,
-        18, 19, 20, 22,
-        25, 26, 27, 29])]
-
-    names = np.array(names)
-    names = names[np.array([
-         0,
-         2,  3,  4,  5,
-         7,  8,  9, 10,
-        12, 13, 15, 16,
-        18, 19, 20, 22,
-        25, 26, 27, 29])]
-
-    print(names.shape)
-    filename = filename.replace('.bvh', '_')
-    BVH.save(filename+'parsed.bvh', anim)
-	'''
-
     """ Do FK """
     print(len(anim.rotations))
 
@@ -147,11 +124,11 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
-filename = 'parsed_144_21_45d'
+filename = 'original_144_21_45d'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
-fileToDecode = 'cmu_rotations_Quat_cmu_21_standardized_w480_ws240_normalfps_scaled1000.npz'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
+fileToDecode = 'cmu_Quat_21_standardized_w480_ws240_normalfps_scaled1000.npz'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
 
 np.set_printoptions(suppress=True)
 
@@ -180,12 +157,12 @@ np.random.seed(0)
 # split into 80% for train and 20% for tests
 
 network = load_model(
-    'models/cmu_rotations_Quat_cmu_21_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
+    'models/cmu_Quat_21_standardized_w480_ws240_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
 network.load_weights(
-    'weights/cmu_rotations_Quat_cmu_21_standardized_w240_ws120_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
+    'weights/cmu_Quat_21_standardized_w480_ws240_normalfps_scaled1000_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
 
 print('decoding...')
 

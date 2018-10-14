@@ -25,48 +25,6 @@ from Quaternions import Quaternions
 from Pivots import Pivots
 
 
-def extractBVHGlobals(fullPath):
-    print("Processing... "+fullPath)
-
-    file = open(fullPath, 'r')
-    print("opened")
-
-    data = []
-    frameDataStart = False
-
-    for line in file:
-        line = line.strip()
-        if not line: continue
-
-        if line.startswith('Frame '):
-            frameDataStart = True
-            continue
-        if frameDataStart:
-            data.append(line)
-
-    rootPos = []
-    rootRot = []
-    localsRot = []
-
-    for currentFrame in data:
-        quaternionData = []
-        floats = [float(x) for x in currentFrame.split()]
-        first = True
-        second = True
-        
-        for x,y,z in zip(*[iter(floats)]*3):
-            if first:
-                rootPos.append((x,y,z))
-                first = False
-            else:
-                if second:
-                    rootRot.append((x,y,z))
-                    second = False
-                localsRot.append((x,y,z))
-                
-    file.close()
-    return rootPos, rootRot, localsRot
-    
 def mse(a, b):
     return np.square(np.subtract(a, b)).mean()
     
@@ -138,21 +96,11 @@ rootPos, rootRot, localsRot = extractBVHGlobals(mypath+folder+'/'+filename)
 anim, names, frametime = BVH.load(mypath+folder+'/'+filename, order='zyx', world=False)
 
 """ Convert to 60 fps (if using 60fps version) """
-anim = anim[::2]
+#anim = anim[::2]
 BVH.save("original.bvh", anim)
 
+rotations = anim.rotations[:,0:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
 
-globalRot = anim.rotations[:,0:1]
-rotations = anim.rotations[:,1:len(anim.rotations)] #1:len(anim.rotations) to avoid glogal rotation
-#rangedRotations = np.array([
-#     1,
-#     2,  3,  4,  5,
-#     7,  8,  9, 10,
-#    12, 13, 15, 16,
-#    18, 19, 20, 22,
-#    25, 26, 27, 29])
-#rotations = anim.rotations[:,1:]
-#globalRot = anim.rotations[:,0:1] 
 print(len(rotations))
 reformatRotations = []
 print(anim.rotations.shape)
