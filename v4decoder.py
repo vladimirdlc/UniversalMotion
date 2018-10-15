@@ -32,10 +32,10 @@ import Animation as Animation
 from enum import Enum
 
 class Decoder(Enum):
-     QUATERNION = 1
-     ROTATION_MATRIX = 2
-     EULER = 3
-     AXIS_ANGLE = 4
+    QUATERNION = 'Quaternion'
+    ROTATION_MATRIX = 'RotatationMatrix'
+    EULER = 'Euler'
+    AXIS_ANGLE = 'AxisAngle'
 
 def mse(a, b):
     return np.square(np.subtract(a, b)).mean()
@@ -117,8 +117,8 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
-filename = '144_21_parsed'
-#filename = 'original_144_21_45d'
+#filename = '144_21_parsed'
+filename = 'original_144_21_45d'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
@@ -127,13 +127,12 @@ np.set_printoptions(suppress=True)
 
 
 decodeType = Decoder.QUATERNION #decoding type
-fileToDecode = 'cmu_RotMat_21_standardized_w240_ws120_normalfps_scaled10000000'
+fileToDecode = 'cmu_Quat_21_standardized_w480_ws240_normalfps_scaled1000'
 X = np.load(fileToDecode+'.npz')
 mean = X['mean']
 std = X['std']
 scale = X['scale']
 
-#print(X['filesinfo'])
 print('\n')
 
 X = np.array(np.load(fileToDecode+'.npz')['clips'])
@@ -157,7 +156,7 @@ print('decoding...')
 
 anim, names, frametime = BVH.load(fullPathAnim, order='zyx', world=False)
 
-BVH.save('original.bvh', anim)
+BVH.save('output_'+filename+'.bvh', anim)
 
 """ Convert to 60 fps """
 
@@ -207,9 +206,6 @@ decoded_quat = array(network.predict(X))
 
 rotations = (((decoded_quat)*std)+mean)/scale
 
-print(rotations[0])
-print(anim.rotations.shape)
-
 idx = 0
 
 #go by all windows 240
@@ -219,7 +215,6 @@ for wdw in rotations:
             break
 
         j = 0
-
         frameLine = []
         for joint in chunks(frame, datatypeLength):
             if decodeType is Decoder.QUATERNION:
@@ -229,7 +224,6 @@ for wdw in rotations:
                 anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
             elif decodeType is Decoder.AXIS_ANGLE:
                 z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #theta, x, y, z
-
                 joint = np.degrees([z, y, x])  # in z,y,x format
                 joints.append(joint)
             elif decodeType is Decoder.ROTATION_MATRIX:
@@ -242,17 +236,6 @@ for wdw in rotations:
             j += 1
         idx += 1
 
-BVH.save("output.bvh", anim)
-
-# print(outputList[0:reformatRotationsEuler.shape[0]])
-# print(reformatRotationsEuler)
-
-# print(">Manual-R:")
-# print(np.square(mse(arrayOut[:][:], reformatRotationsEuler)))
-
-
-# qManualOut = np.fromfile(fileName, dtype="float")
-
-# print(anim.rotations.euler().shape)
+BVH.save(filename+'_'+decodeType.value+'.bvh', anim)
 
 print("finished")
