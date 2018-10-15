@@ -3,6 +3,13 @@ import sys
 import numpy as np
 from enum import Enum
 
+class Decoder(Enum):
+    QUATERNION = 'Quaternion'
+    ROTATION_MATRIX = 'RotatationMatrix'
+    EULER = 'Euler'
+    AXIS_ANGLE = 'AxisAngle'
+
+
 sys.path.append('../../motion')
 import BVH as BVH
 import Animation as Animation
@@ -15,6 +22,7 @@ wdw = 240
 step = 120
 scale = 1000
 
+decodeType = Decoder.QUATERNION
 
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
@@ -75,7 +83,7 @@ def process_file_rotations(filename, window=240, window_step=120):
                 m = eang.euler2mat(euler[2], euler[1], euler[0])
                 input = np.array(m[0].tolist() + m[1].tolist() + m[2].tolist())  # 9 values
                 joints.append(input)
-
+            reformatRotations.append(joints)
     rotations = np.array(reformatRotations)
 
     print(rotations.shape)
@@ -101,21 +109,12 @@ def process_file_rotations(filename, window=240, window_step=120):
 
     return windows
 
-
-class Decoder(Enum):
-    QUATERNION = 'Quaternion'
-    ROTATION_MATRIX = 'RotatationMatrix'
-    EULER = 'Euler'
-    AXIS_ANGLE = 'AxisAngle'
-
-
 def get_files(directory):
     return [os.path.join(directory, f) for f in sorted(list(os.listdir(directory)))
             if os.path.isfile(os.path.join(directory, f))
             and f.endswith('.bvh') and f != 'rest.bvh']
 
 
-decodeType = Decoder.QUATERNION
 # MSEConvertAndBackTest()
 
 cmu_files = get_files('cmu')
@@ -135,9 +134,6 @@ mean = np.mean(data_clips)
 data_clips -= mean
 data_clips /= std
 np.savez_compressed(
-    'cmu_rotations_{}_cmu_{}_standardized_w{}_ws{}_normalfps_scaled{}'.format(decodeType.value, data_clips.shape[2],
-                                                                              wdw, step, scale), clips=data_clips,
-    std=std, mean=mean, scale=scale)
-# np.savez_compressed('cmu_rotations_Quat_cmu_20_standardized_w480_ws240_normalfps_scaled{}'.format(scale), filesinfo=filesidx, clips=data_clips, std=std, mean=mean, scale=scale)
+    'cmu_rotations_{}_cmu_{}_standardized_w{}_ws{}_normalfps_scaled{}'.format(decodeType.value, data_clips.shape[2], wdw, step, scale), clips=data_clips, std=std, mean=mean, scale=scale)
 
 print(scale)
