@@ -22,7 +22,7 @@ wdw = 240
 step = 120
 scale = 1000
 
-decodeType = Decoder.QUATERNION
+decodeType = Decoder.AXIS_ANGLE
 
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
@@ -83,18 +83,17 @@ def process_file_rotations(filename, window=240, window_step=120):
                 m = eang.euler2mat(euler[2], euler[1], euler[0])
                 input = np.array(m[0].tolist() + m[1].tolist() + m[2].tolist())  # 9 values
                 joints.append(input)
-            reformatRotations.append(joints)
+
+        reformatRotations.append(joints)
+
     rotations = np.array(reformatRotations)
 
     print(rotations.shape)
 
     """ Slide over windows """
     windows = []
-    windows_classes = []
 
     for j in range(0, len(rotations) - window // 8, window_step):
-        print(j)
-        # input(j)
         """ If slice too small pad out by repeating start and end poses """
         slice = rotations[j:j + window]
 
@@ -115,10 +114,12 @@ def get_files(directory):
             and f.endswith('.bvh') and f != 'rest.bvh']
 
 
-# MSEConvertAndBackTest()
 
 cmu_files = get_files('cmu')
 cmu_rot_clips = []
+
+wdw = 240
+step = 120
 
 for i, item in enumerate(cmu_files):
     print('Processing Rotation %i of %i (%s)' % (i, len(cmu_files), item))
