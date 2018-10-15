@@ -33,7 +33,7 @@ np.set_printoptions(suppress=True,
 np.random.seed(0)
 
 version = "tq3"
-fileChanged = "cmu_RotMat_cmu_21_standardized_w240_ws120_normalfps_scaled10000000"
+fileChanged = "cmu_Quat_21_standardized_w480_ws240_normalfps_scaled1000"
 
 #fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w8_ws4_normalfps_scaled1000"
 #fileChanged = "data_cmu_RotMat_full_j20_ws240x120_standardized_scaled10000000"

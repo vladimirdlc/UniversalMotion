@@ -84,6 +84,12 @@ def process_file_rotations(filename, window=240, window_step=240):
                 input = np.insert(input, 0, angle)
                 input = np.array(input)  # 4 values
                 joints.append(input * scale)
+            elif decodeType is Decoder.ROTATION_MATRIX:
+                euler = Quaternions(joint).euler().ravel()  # we get x,y,z
+                # eang library uses convention z,y,x
+                m = eang.euler2mat(euler[2], euler[1], euler[0])
+                input = np.array(m[0].tolist() + m[1].tolist() + m[2].tolist())  # 9 values
+                joints.append(input)
 
         reformatRotations.append(joints)
 
@@ -120,8 +126,8 @@ print('processing...')
 np.set_printoptions(suppress=True)
 
 
-decodeType = Decoder.AXIS_ANGLE
-fileToDecode = 'cmu_AxisAngle_21_ws240_w120_standardized_scaled10000000'  # 'cmu_rotations_full_cmu_30_w240_2samples_standardized_scaled10000.npz'
+decodeType = Decoder.QUATERNION #decoding type
+fileToDecode = 'cmu_RotMat_21_standardized_w240_ws120_normalfps_scaled10000000'
 X = np.load(fileToDecode+'.npz')
 mean = X['mean']
 std = X['std']
@@ -167,7 +173,6 @@ for frame in rotations:
     joints = []
 
     for joint in frame:
-        # print(joint)
         if decodeType is Decoder.QUATERNION:
             joints.append(joint * scale)
         elif decodeType is Decoder.EULER:
@@ -178,6 +183,12 @@ for frame in rotations:
             input = np.insert(input, 0, angle)
             input = np.array(input) #4 values
             joints.append(input*scale)
+        elif decodeType is Decoder.ROTATION_MATRIX:
+            euler = Quaternions(joint).euler().ravel() #we get x,y,z
+            #eang library uses convention z,y,x
+            m = eang.euler2mat(euler[2], euler[1], euler[0])
+            input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
+            joints.append(input)
 
     reformatRotations.append(joints)
 
@@ -221,7 +232,13 @@ for wdw in rotations:
 
                 joint = np.degrees([z, y, x])  # in z,y,x format
                 joints.append(joint)
-                print(joint)
+            elif decodeType is Decoder.ROTATION_MATRIX:
+                m0 = np.array([joint[0], joint[1], joint[2]])
+                m1 = np.array([joint[3], joint[4], joint[5]])
+                m2 = np.array([joint[6], joint[7], joint[8]])
+                m = [m0, m1, m2]
+                joint = eang.mat2euler(m)  # in z,y,x rad format
+                joints.append(joint)
             j += 1
         idx += 1
 
