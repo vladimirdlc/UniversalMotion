@@ -25,7 +25,7 @@ wdw = 240
 step = 120
 scale = 10000000
 
-decodeType = Decoder.QUATERNION
+decodeType = Decoder.AXIS_ANGLE
 
 def getArgParser():
     parser = Ap.ArgumentParser(description='Parameters to add noise')
@@ -85,12 +85,17 @@ def process_file_rotations(filename, window=240, window_step=120):
     # encoding
     for frame in rotations:
         joints = []
+        first = True
 
         for joint in frame:
             if args.noisy:
-                x, y, z = Quaternions(joint).euler().ravel()
-                joint = [addNoise(x), addNoise(y), addNoise(z)]
-                Quaternions.from_euler(np.array(joint))
+                if first:
+                    first = False
+                else:
+                    x, y, z = Quaternions(joint).euler().ravel()
+                    joint = [addNoise(x), addNoise(y), addNoise(z)]
+                    joint = Quaternions.from_euler(np.array(joint), order='xyz').ravel()
+
             if decodeType is Decoder.QUATERNION:
                 joints.append(joint * scale)
             elif decodeType is Decoder.EULER:
@@ -106,7 +111,7 @@ def process_file_rotations(filename, window=240, window_step=120):
                 # eang library uses convention z,y,x
                 m = eang.euler2mat(euler[2], euler[1], euler[0])
                 input = np.array(m[0].tolist() + m[1].tolist() + m[2].tolist())  # 9 values
-                joints.append(input)
+                joints.append(input*scale)
 
         reformatRotations.append(joints)
 
@@ -175,8 +180,8 @@ data_clips -= mean
 data_clips /= std
 
 if args.noisy:
-    np.savez_compressed('cmu_rotations_{}_cmu_{}_standardized_w{}_ws{}_normalfps_scaled{}'.format(decodeType.value, data_clips.shape[2], wdw, step, scale), clips=data_clips, std=std, mean=mean, scale=scale)
-else:
     np.savez_compressed('cmu_rotations_{}_cmu_{}_standardized_w{}_ws{}_normalfps_scaled{}_noisy'.format(decodeType.value, data_clips.shape[2], wdw, step, scale), clips=data_clips, std=std, mean=mean, scale=scale)
+else:
+    np.savez_compressed('cmu_rotations_{}_cmu_{}_standardized_w{}_ws{}_normalfps_scaled{}'.format(decodeType.value, data_clips.shape[2], wdw, step, scale), clips=data_clips, std=std, mean=mean, scale=scale)
 
 print(scale)

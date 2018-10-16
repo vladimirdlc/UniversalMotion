@@ -118,7 +118,7 @@ def chunks(l, n):
         yield l[i:i + n]
 
 #filename = '144_21_parsed'
-filename = 'original_144_21_45d'
+filename = 'input_gorilla_walk_decoded_2pass_240x120'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
@@ -127,7 +127,7 @@ np.set_printoptions(suppress=True)
 
 
 decodeType = Decoder.QUATERNION #decoding type
-fileToDecode = 'cmu_Quat_21_standardized_w480_ws240_normalfps_scaled1000'
+fileToDecode = 'cmu_rotations_Quat_cmu_21_standardized_w240_ws120_normalfps_scaled1000'
 X = np.load(fileToDecode+'.npz')
 mean = X['mean']
 std = X['std']
@@ -154,9 +154,10 @@ print('decoding...')
 #print(">MSE I/O NN Q <> QHat:")
 #print(mse(trainingData, decoded_quat))
 
+
 anim, names, frametime = BVH.load(fullPathAnim, order='zyx', world=False)
 
-BVH.save('output_'+filename+'.bvh', anim)
+BVH.save('input_'+filename+'.bvh', anim)
 
 """ Convert to 60 fps """
 
@@ -187,7 +188,7 @@ for frame in rotations:
             #eang library uses convention z,y,x
             m = eang.euler2mat(euler[2], euler[1], euler[0])
             input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
-            joints.append(input)
+            joints.append(input*scale)
 
     reformatRotations.append(joints)
 
@@ -236,6 +237,6 @@ for wdw in rotations:
             j += 1
         idx += 1
 
-BVH.save(filename+'_'+decodeType.value+'.bvh', anim)
+BVH.save(filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh', anim)
 
 print("finished")
