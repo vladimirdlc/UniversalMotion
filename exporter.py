@@ -20,9 +20,9 @@ import eulerangles as eang
 
 wdw = 240
 step = 120
-scale = 1000
+scale = 1
 
-decodeType = Decoder.AXIS_ANGLE
+decodeType = Decoder.ROTATION_MATRIX
 
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
@@ -82,7 +82,7 @@ def process_file_rotations(filename, window=240, window_step=120):
                 # eang library uses convention z,y,x
                 m = eang.euler2mat(euler[2], euler[1], euler[0])
                 input = np.array(m[0].tolist() + m[1].tolist() + m[2].tolist())  # 9 values
-                joints.append(input)
+                joints.append(input*scale)
 
         reformatRotations.append(joints)
 
@@ -114,7 +114,7 @@ def get_files(directory):
             and f.endswith('.bvh') and f != 'rest.bvh']
 
 
-
+print("scale: "+scale)
 cmu_files = get_files('cmu')
 cmu_rot_clips = []
 

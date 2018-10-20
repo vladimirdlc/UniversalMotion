@@ -52,7 +52,7 @@ def normalize(array):
     quat = np.array(array)
     return quat / np.sqrt(np.dot(quat, quat))
 
-def process_file_rotations(filename, window=240, window_step=240):
+def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
 
     """ Convert to 60 fps """
@@ -93,7 +93,6 @@ def process_file_rotations(filename, window=240, window_step=240):
 
         reformatRotations.append(joints)
 
-
     rotations = np.array(reformatRotations)
     rotations = rotations.reshape(rotations.shape[0], rotations.shape[1]*rotations.shape[2])
 
@@ -117,17 +116,17 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
+outputFolder = 'decoded/'
 #filename = '144_21_parsed'
-filename = 'input_gorilla_walk_decoded_2pass_240x120'
+filename = '144_21_parsed'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
 
 np.set_printoptions(suppress=True)
 
-
-decodeType = Decoder.QUATERNION #decoding type
-fileToDecode = 'cmu_rotations_Quat_cmu_21_standardized_w240_ws120_normalfps_scaled1000'
+decodeType = Decoder.AXIS_ANGLE #decoding type
+fileToDecode = 'cmu_rotations_'+decodeType.value+'_cmu_21_standardized_w240_ws120_normalfps_scaled1'
 X = np.load(fileToDecode+'.npz')
 mean = X['mean']
 std = X['std']
@@ -146,6 +145,7 @@ network = load_model(
 network.compile(optimizer='adam', loss='mse')
 network.summary()
 
+
 network.load_weights(
     'weights/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
 
@@ -157,7 +157,7 @@ print('decoding...')
 
 anim, names, frametime = BVH.load(fullPathAnim, order='zyx', world=False)
 
-BVH.save('input_'+filename+'.bvh', anim)
+BVH.save(outputFolder+'input_'+filename+'.bvh', anim)
 
 """ Convert to 60 fps """
 
@@ -174,23 +174,23 @@ for frame in rotations:
 
     for joint in frame:
         if decodeType is Decoder.QUATERNION:
-            joints.append(joint * scale)
+            joints.append(joint)
         elif decodeType is Decoder.EULER:
-            joints.append(Quaternions(joint).euler().ravel()*scale)
+            joints.append(Quaternions(joint).euler().ravel())
         elif decodeType is Decoder.AXIS_ANGLE:
             angle, axis = Quaternions(joint).angle_axis()
             input = axis.flatten()
             input = np.insert(input, 0, angle)
             input = np.array(input) #4 values
-            joints.append(input*scale)
+            joints.append(input)
         elif decodeType is Decoder.ROTATION_MATRIX:
             euler = Quaternions(joint).euler().ravel() #we get x,y,z
             #eang library uses convention z,y,x
             m = eang.euler2mat(euler[2], euler[1], euler[0])
             input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
-            joints.append(input*scale)
+            joints.append(input)
 
-    reformatRotations.append(joints)
+    reformatRotations.append(joints*scale)
 
 reformatRotations = np.array(reformatRotations)
 
@@ -237,6 +237,7 @@ for wdw in rotations:
             j += 1
         idx += 1
 
-BVH.save(filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh', anim)
+fullFileName = outputFolder+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
+BVH.save(fullFileName, anim)
 
 print("finished")

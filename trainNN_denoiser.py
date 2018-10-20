@@ -1,3 +1,5 @@
+#Does not provide any better results than trainNN
+
 import logging
 from os import listdir
 from os.path import isfile, join
@@ -33,7 +35,7 @@ np.set_printoptions(suppress=True,
 np.random.seed(0)
 
 version = "den1"
-fileChanged = "cmu_rotations_Quaternion_cmu_21_standardized_w240_ws120_normalfps_scaled10000000"
+fileChanged = "cmu_rotations_Euler_cmu_21_standardized_w240_ws120_normalfps_scaled1"
 
 #fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w8_ws4_normalfps_scaled1000"
 #fileChanged = "data_cmu_RotMat_full_j20_ws240x120_standardized_scaled10000000"
