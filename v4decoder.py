@@ -229,6 +229,7 @@ for filename in allFiles:
                 frameLine = []
                 for joint in chunks(frame, datatypeLength):
                     if skipFirst is True:
+                        j+=1
                         skipFirst = False
                         continue
 
