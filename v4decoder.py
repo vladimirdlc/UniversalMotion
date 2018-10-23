@@ -118,7 +118,7 @@ def chunks(l, n):
 
 outputFolder = 'decoded/'
 #filename = '144_21_parsed'
-filename = '144_21'
+filename = 'gorilla_walk_45d'
 fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
 print('processing...')
@@ -126,6 +126,7 @@ print('processing...')
 np.set_printoptions(suppress=True)
 
 allDecodes = [Decoder.AXIS_ANGLE, Decoder.EULER, Decoder.QUATERNION, Decoder.ROTATION_MATRIX]
+customFrameTime = 0.032667
 
 for decodeType in allDecodes:
     fileToDecode = 'cmu_rotations_'+decodeType.value+'_cmu_21_standardized_w240_ws120_normalfps_scaled1'
@@ -155,16 +156,17 @@ for decodeType in allDecodes:
 
     #print(">MSE I/O NN Q <> QHat:")
     #print(mse(trainingData, decoded_quat))
-
+    folder60fps = outputFolder+'60fps/'+filename+'/'
+    if not os.path.exists(folder60fps):
+        os.makedirs(folder60fps)
 
     anim, names, frametime = BVH.load(fullPathAnim, order='zyx', world=False)
 
     BVH.save(outputFolder+'input_'+filename+'.bvh', anim)
 
-    anim60 = anim[::2]
-    BVH.save(outputFolder+'/60fps/input_'+filename+'.bvh', anim60)
+    anim60 = anim[::2] # convert to 60 fps
+    BVH.save(outputFolder+'60fps/'+filename+'/'+'input_'+filename+'.bvh', anim60, frametime=customFrameTime)
 
-    """ Convert to 60 fps """
 
     # globalRot = anim.rotations[:,0:1]
     rotations = anim.rotations[:, 0:len(anim.rotations)]  # 1:len(anim.rotations) to avoid glogal rotation
@@ -220,9 +222,14 @@ for decodeType in allDecodes:
             if idx >= anim.rotations.shape[0]:
                 break
 
+            skipFirst = True
             j = 0
             frameLine = []
             for joint in chunks(frame, datatypeLength):
+                if skipFirst is True:
+                    skipFirst = False
+                    continue
+
                 if decodeType is Decoder.QUATERNION:
                     anim.rotations[idx][j] = Quaternions(joint)
                 elif decodeType is Decoder.EULER:
@@ -244,7 +251,8 @@ for decodeType in allDecodes:
 
     fullFileName = outputFolder+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
     BVH.save(fullFileName, anim)
-    fullFileName = outputFolder+'/60fps/'+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
-    BVH.save(fullFileName, anim)
+    fullFileName = outputFolder+'60fps/'+filename+'/'+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
+    anim60 = anim[::2] # convert to 60fps
+    BVH.save(fullFileName, anim60, frametime=customFrameTime)
 
     print("finished "+fullFileName)
