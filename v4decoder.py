@@ -118,141 +118,143 @@ def chunks(l, n):
 
 outputFolder = 'decoded/'
 #filename = '144_21_parsed'
-filename = 'gorilla_walk_45d'
-fullPathAnim = 'data/decoding/' + filename + '.bvh'
-
-print('processing...')
-
-np.set_printoptions(suppress=True)
 
 allDecodes = [Decoder.AXIS_ANGLE, Decoder.EULER, Decoder.QUATERNION, Decoder.ROTATION_MATRIX]
-customFrameTime = 0.032667
+allFiles = ['144_21', '144_21_45d', '144_21_90d', 'gorilla_walk', 'gorilla_walk_45d', 'gorilla_walk_90d', 'gorilla_walk_asymetric']
+customFrameTime = 0.031667
 
-for decodeType in allDecodes:
-    fileToDecode = 'cmu_rotations_'+decodeType.value+'_cmu_21_standardized_w240_ws120_normalfps_scaled1'
-    X = np.load(fileToDecode+'.npz')
-    mean = X['mean']
-    std = X['std']
-    scale = X['scale']
+for filename in allFiles:
+    fullPathAnim = 'data/decoding/' + filename + '.bvh'
 
-    print('\n')
+    print('processing...')
 
-    X = np.array(np.load(fileToDecode+'.npz')['clips'])
+    np.set_printoptions(suppress=True)
 
+    for decodeType in allDecodes:
+        fileToDecode = 'cmu_rotations_'+decodeType.value+'_cmu_21_standardized_w240_ws120_normalfps_scaled1'
+        X = np.load(fileToDecode+'.npz')
+        mean = X['mean']
+        std = X['std']
+        scale = X['scale']
 
-    np.random.seed(0)
-    # split into 80% for train and 20% for tests
+        print('\n')
 
-    network = load_model(
-        'models/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
-    network.compile(optimizer='adam', loss='mse')
-    network.summary()
-
-
-    network.load_weights(
-        'weights/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
-
-    print('decoding...')
-
-    #print(">MSE I/O NN Q <> QHat:")
-    #print(mse(trainingData, decoded_quat))
-    folder60fps = outputFolder+'60fps/'+filename+'/'
-    if not os.path.exists(folder60fps):
-        os.makedirs(folder60fps)
-
-    anim, names, frametime = BVH.load(fullPathAnim, order='zyx', world=False)
-
-    BVH.save(outputFolder+'input_'+filename+'.bvh', anim)
-
-    anim60 = anim[::2] # convert to 60 fps
-    BVH.save(outputFolder+'60fps/'+filename+'/'+'input_'+filename+'.bvh', anim60, frametime=customFrameTime)
+        X = np.array(np.load(fileToDecode+'.npz')['clips'])
 
 
-    # globalRot = anim.rotations[:,0:1]
-    rotations = anim.rotations[:, 0:len(anim.rotations)]  # 1:len(anim.rotations) to avoid glogal rotation
+        np.random.seed(0)
+        # split into 80% for train and 20% for tests
 
-    print(len(rotations))
-    """ Remove Uneeded Joints """
-    reformatRotations = []
+        network = load_model(
+            'models/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
+        network.compile(optimizer='adam', loss='mse')
+        network.summary()
 
-    # encoding
-    for frame in rotations:
-        joints = []
 
-        for joint in frame:
-            if decodeType is Decoder.QUATERNION:
-                joints.append(joint)
-            elif decodeType is Decoder.EULER:
-                joints.append(Quaternions(joint).euler().ravel())
-            elif decodeType is Decoder.AXIS_ANGLE:
-                angle, axis = Quaternions(joint).angle_axis()
-                input = axis.flatten()
-                input = np.insert(input, 0, angle)
-                input = np.array(input) #4 values
-                joints.append(input)
-            elif decodeType is Decoder.ROTATION_MATRIX:
-                euler = Quaternions(joint).euler().ravel() #we get x,y,z
-                #eang library uses convention z,y,x
-                m = eang.euler2mat(euler[2], euler[1], euler[0])
-                input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
-                joints.append(input)
+        network.load_weights(
+            'weights/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
 
-        reformatRotations.append(joints*scale)
+        print('decoding...')
 
-    reformatRotations = np.array(reformatRotations)
+        #print(">MSE I/O NN Q <> QHat:")
+        #print(mse(trainingData, decoded_quat))
+        folder60fps = outputFolder+'60fps/'+filename+'/'
+        if not os.path.exists(folder60fps):
+            os.makedirs(folder60fps)
 
-    datatypeLength = X.shape[3] #4 for quaternions
+        anim, names, frametime = BVH.load(fullPathAnim, order='zyx', world=False)
 
-    X = process_file_rotations(fullPathAnim, window=X.shape[1], window_step=X.shape[1])
-    X = np.array(list(X))
-    print(X.shape)
-    X -= mean
-    X /= std
-    #X = X.reshape(X.shape[0], X.shape[1], X.shape[2] * X.shape[3])
+        BVH.save(outputFolder+'input_'+filename+'.bvh', anim)
 
-    decoded_quat = array(network.predict(X))
+        anim60 = anim[::2] # convert to 60 fps
+        BVH.save(outputFolder+'60fps/'+filename+'/'+'input_'+filename+'.bvh', anim60, frametime=customFrameTime)
 
-    rotations = (((decoded_quat)*std)+mean)/scale
 
-    idx = 0
+        # globalRot = anim.rotations[:,0:1]
+        rotations = anim.rotations[:, 0:len(anim.rotations)]  # 1:len(anim.rotations) to avoid glogal rotation
 
-    #go by all windows 240
-    for wdw in rotations:
-        for frame in wdw:
-            if idx >= anim.rotations.shape[0]:
-                break
+        print(len(rotations))
+        """ Remove Uneeded Joints """
+        reformatRotations = []
 
-            skipFirst = True
-            j = 0
-            frameLine = []
-            for joint in chunks(frame, datatypeLength):
-                if skipFirst is True:
-                    skipFirst = False
-                    continue
+        # encoding
+        for frame in rotations:
+            joints = []
 
+            for joint in frame:
                 if decodeType is Decoder.QUATERNION:
-                    anim.rotations[idx][j] = Quaternions(joint)
+                    joints.append(joint)
                 elif decodeType is Decoder.EULER:
-                    joint = [joint[2], joint[1], joint[0]]
-                    anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
+                    joints.append(Quaternions(joint).euler().ravel())
                 elif decodeType is Decoder.AXIS_ANGLE:
-                    z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #theta, x, y, z
-                    joint = np.degrees([z, y, x])  # in z,y,x format
-                    joints.append(joint)
+                    angle, axis = Quaternions(joint).angle_axis()
+                    input = axis.flatten()
+                    input = np.insert(input, 0, angle)
+                    input = np.array(input) #4 values
+                    joints.append(input)
                 elif decodeType is Decoder.ROTATION_MATRIX:
-                    m0 = np.array([joint[0], joint[1], joint[2]])
-                    m1 = np.array([joint[3], joint[4], joint[5]])
-                    m2 = np.array([joint[6], joint[7], joint[8]])
-                    m = [m0, m1, m2]
-                    joint = eang.mat2euler(m)  # in z,y,x rad format
-                    joints.append(joint)
-                j += 1
-            idx += 1
+                    euler = Quaternions(joint).euler().ravel() #we get x,y,z
+                    #eang library uses convention z,y,x
+                    m = eang.euler2mat(euler[2], euler[1], euler[0])
+                    input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
+                    joints.append(input)
 
-    fullFileName = outputFolder+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
-    BVH.save(fullFileName, anim)
-    fullFileName = outputFolder+'60fps/'+filename+'/'+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
-    anim60 = anim[::2] # convert to 60fps
-    BVH.save(fullFileName, anim60, frametime=customFrameTime)
+            reformatRotations.append(joints*scale)
 
-    print("finished "+fullFileName)
+        reformatRotations = np.array(reformatRotations)
+
+        datatypeLength = X.shape[3] #4 for quaternions
+
+        X = process_file_rotations(fullPathAnim, window=X.shape[1], window_step=X.shape[1])
+        X = np.array(list(X))
+        print(X.shape)
+        X -= mean
+        X /= std
+        #X = X.reshape(X.shape[0], X.shape[1], X.shape[2] * X.shape[3])
+
+        decoded_quat = array(network.predict(X))
+
+        rotations = (((decoded_quat)*std)+mean)/scale
+
+        idx = 0
+
+        #go by all windows 240
+        for wdw in rotations:
+            for frame in wdw:
+                if idx >= anim.rotations.shape[0]:
+                    break
+
+                skipFirst = True
+                j = 0
+                frameLine = []
+                for joint in chunks(frame, datatypeLength):
+                    if skipFirst is True:
+                        skipFirst = False
+                        continue
+
+                    if decodeType is Decoder.QUATERNION:
+                        anim.rotations[idx][j] = Quaternions(joint)
+                    elif decodeType is Decoder.EULER:
+                        joint = [joint[2], joint[1], joint[0]]
+                        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
+                    elif decodeType is Decoder.AXIS_ANGLE:
+                        z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #theta, x, y, z
+                        joint = np.degrees([z, y, x])  # in z,y,x format
+                        joints.append(joint)
+                    elif decodeType is Decoder.ROTATION_MATRIX:
+                        m0 = np.array([joint[0], joint[1], joint[2]])
+                        m1 = np.array([joint[3], joint[4], joint[5]])
+                        m2 = np.array([joint[6], joint[7], joint[8]])
+                        m = [m0, m1, m2]
+                        joint = eang.mat2euler(m)  # in z,y,x rad format
+                        joints.append(joint)
+                    j += 1
+                idx += 1
+
+        fullFileName = outputFolder+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
+        BVH.save(fullFileName, anim)
+        fullFileName = outputFolder+'60fps/'+filename+'/'+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
+        anim60 = anim[::2] # convert to 60fps
+        BVH.save(fullFileName, anim60, frametime=customFrameTime)
+
+        print("finished "+fullFileName)
