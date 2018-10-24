@@ -10,8 +10,8 @@ def getArgParser():
 
     parser.add_argument("--file", default="numbers_array.txt", type=str)
     parser.add_argument("--ofile", default="numbers_array_out.txt", type=str)
-    parser.add_argument("--le", default="-90", type=float)
-    parser.add_argument("--ue", default="90", type=float)
+    parser.add_argument("--le", default="-45", type=float)
+    parser.add_argument("--ue", default="45", type=float)
     parser.add_argument("--llimit", default="-180", type=float)
     parser.add_argument("--ulimit", default="180", type=float)
     parser.add_argument("--ignoreFirstRotation", default="True", type=bool)
