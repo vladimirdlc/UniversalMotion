@@ -2,38 +2,23 @@ import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-from os import listdir
-from os.path import isfile, join
-
-from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Conv1D, Dropout, MaxPooling1D, UpSampling1D, \
-    BatchNormalization, Activation
-from keras.models import Model, Sequential, model_from_json, load_model
-from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
+from mse_calc import mseAB_files
+from keras.models import load_model
 import eulerangles as eang
 from numpy import array
 import numpy as np
-import csv
 
-from Quaternions import Quaternions
-
-import math
-from math import radians, degrees
 import sys
-
-from itertools import islice
 
 sys.path.insert(0, './motion')
 
 import BVH as BVH
-import Animation as Animation
 from Quaternions import Quaternions
-import Animation as Animation
 from enum import Enum
 
 class Decoder(Enum):
     QUATERNION = 'Quaternion'
-    ROTATION_MATRIX = 'RotatationMatrix'
+    ROTATION_MATRIX = 'RotationMatrix'
     EULER = 'Euler'
     AXIS_ANGLE = 'AxisAngle'
 
@@ -120,8 +105,13 @@ outputFolder = 'decoded/'
 #filename = '144_21_parsed'
 
 allDecodes = [Decoder.AXIS_ANGLE, Decoder.EULER, Decoder.QUATERNION, Decoder.ROTATION_MATRIX]
-allFiles = ['144_21', '144_21_45d', '144_21_90d', 'gorilla_walk', 'gorilla_walk_45d', 'gorilla_walk_90d', 'gorilla_walk_asymetric']
+#'144_21', '144_21_45d', '144_21_90d', 'gorilla_run', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric',
+allFiles = ['144_21', '144_21_45d', '144_21_90d', 'gorilla_run', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric',
+            'b0041_kicking', 'b0041_kicking_45d', 'b0041_kicking_90d']
+#allFiles = ['144_21']
+
 customFrameTime = 0.031667
+file1 = open("MSE.txt", "a")
 
 for filename in allFiles:
     fullPathAnim = 'data/decoding/' + filename + '.bvh'
@@ -140,7 +130,6 @@ for filename in allFiles:
         print('\n')
 
         X = np.array(np.load(fileToDecode+'.npz')['clips'])
-
 
         np.random.seed(0)
         # split into 80% for train and 20% for tests
@@ -258,4 +247,16 @@ for filename in allFiles:
         anim60 = anim[::2] # convert to 60fps
         BVH.save(fullFileName, anim60, frametime=customFrameTime)
 
+        #calculating mse
+        fileA = outputFolder + '60fps/' + filename + '/' + 'input_' + filename + '.bvh'
+        fileB = fullFileName
+
+        total_mse = mseAB_files(fileA.replace("_90d","").replace("_45d",""), fileB)
+        strout = ("f1:{},f2:{},{}\n".format(fileA, fileB, "{0:.4f}".format(total_mse)))
+        print(strout)
+
+        file1.write(strout)
+
         print("finished "+fullFileName)
+
+file1.close()
