@@ -106,8 +106,9 @@ outputFolder = 'decoded/'
 
 allDecodes = [Decoder.AXIS_ANGLE, Decoder.EULER, Decoder.QUATERNION, Decoder.ROTATION_MATRIX]
 #'144_21', '144_21_45d', '144_21_90d', 'gorilla_run', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric',
-allFiles = ['144_21', '144_21_45d', '144_21_90d', 'gorilla_run', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric',
-            'b0041_kicking', 'b0041_kicking_45d', 'b0041_kicking_90d']
+allFiles = ['144_21', '144_21_10d', '144_21_20d', '144_21_45d', '144_21_90d',
+            'b0041_kicking', 'b0041_kicking_10d', 'b0041_kicking_20d', 'b0041_kicking_45d', 'b0041_kicking_90d'
+            'gorilla_run', 'gorilla_run_10d', 'gorilla_run_20d', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric']
 #allFiles = ['144_21']
 
 customFrameTime = 0.031667
@@ -121,12 +122,11 @@ for filename in allFiles:
     np.set_printoptions(suppress=True)
 
     for decodeType in allDecodes:
-        fileToDecode = 'cmu_rotations_'+decodeType.value+'_cmu_21_standardized_w240_ws120_normalfps_scaled1'
+        fileToDecode = 'cmu_'+decodeType.value+'_21j_w240x120'
         X = np.load(fileToDecode+'.npz')
         mean = X['mean']
         std = X['std']
         scale = X['scale']
-
         print('\n')
 
         X = np.array(np.load(fileToDecode+'.npz')['clips'])
@@ -251,7 +251,7 @@ for filename in allFiles:
         fileA = outputFolder + '60fps/' + filename + '/' + 'input_' + filename + '.bvh'
         fileB = fullFileName
 
-        total_mse = mseAB_files(fileA.replace("_90d","").replace("_45d",""), fileB)
+        total_mse = mseAB_files(fileA.replace("_10d","").replace("_20d","").replace("_90d","").replace("_45d",""), fileB)
         strout = ("f1:{},f2:{},{}\n".format(fileA, fileB, "{0:.4f}".format(total_mse)))
         print(strout)
 
