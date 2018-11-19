@@ -1,3 +1,0 @@
-http://www.iro.umontreal.ca/~dift6751/paper_potvin_nn_tsp.pdf
-
-https://math.stackexchange.com/questions/131336/uniform-random-quaternion-in-a-restricted-angle-range
