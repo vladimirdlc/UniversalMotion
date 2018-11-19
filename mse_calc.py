@@ -24,21 +24,17 @@ def angleDiff( angle1, angle2 , ignoreFirstRot = True):
 
     i = 0
     for line in diff:
-        j = 0
+        if i < startidx:
+            i += 1
+            continue
 
-        for c in line:
-            if j < startidx:
-                j +=1
-                continue
-
-            diff[i][j] = min(abs(angle1[i][j]-angle2[i][j]),abs(angle2[i][j]-angle1[i][j]))
-            j += 1
+        diff[i] = min(abs(angle1[i]-angle2[i]),abs(angle2[i]-angle1[i]))
         i += 1
 
     return diff
 
 def mseAngle(a, b):
-    return square(angleDiff(a, b)).mean()
+    return angleDiff(a.flatten(), b.flatten()).mean()
 
 #args = getArgParser()
 

@@ -60,15 +60,15 @@ def process_file_rotations(filename, window=240, window_step=120):
 
         for joint in frame:
             if decodeType is Decoder.QUATERNION:
-                joints.append(joint * scale)
+                joints.append(joint)
             elif decodeType is Decoder.EULER:
-                joints.append(Quaternions(joint).euler().ravel() * scale)
+                joints.append(Quaternions(joint).euler().ravel())
             elif decodeType is Decoder.AXIS_ANGLE:
                 angle, axis = Quaternions(joint).angle_axis()
                 input = axis.flatten()
                 input = np.insert(input, 0, angle)
                 input = np.array(input)  # 4 values
-                joints.append(input * scale)
+                joints.append(input)
             elif decodeType is Decoder.ROTATION_MATRIX:
                 euler = Quaternions(joint).euler().ravel()  # we get x,y,z
                 # eang library uses convention z,y,x
@@ -103,13 +103,13 @@ def chunks(l, n):
 
 outputFolder = 'decoded/'
 #filename = '144_21_parsed'
-
-allDecodes = [Decoder.AXIS_ANGLE, Decoder.EULER, Decoder.QUATERNION, Decoder.ROTATION_MATRIX]
+allDecodes = [Decoder.QUATERNION]
+#allDecodes = [Decoder.AXIS_ANGLE, Decoder.EULER, Decoder.QUATERNION, Decoder.ROTATION_MATRIX]
 #'144_21', '144_21_45d', '144_21_90d', 'gorilla_run', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric',
-allFiles = ['144_21', '144_21_10d', '144_21_20d', '144_21_45d', '144_21_90d',
-            'b0041_kicking', 'b0041_kicking_10d', 'b0041_kicking_20d', 'b0041_kicking_45d', 'b0041_kicking_90d'
-            'gorilla_run', 'gorilla_run_10d', 'gorilla_run_20d', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric']
-#allFiles = ['144_21']
+#allFiles = ['144_21', '144_21_10d', '144_21_20d', '144_21_45d', '144_21_90d',
+#            'b0041_kicking', 'b0041_kicking_10d', 'b0041_kicking_20d', 'b0041_kicking_45d', 'b0041_kicking_90d',
+#            'gorilla_run', 'gorilla_run_10d', 'gorilla_run_20d', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric']
+allFiles = ['gorilla_run_to_interpolate_10f']
 
 customFrameTime = 0.031667
 file1 = open("MSE.txt", "a")
@@ -123,10 +123,10 @@ for filename in allFiles:
 
     for decodeType in allDecodes:
         fileToDecode = 'cmu_'+decodeType.value+'_21j_w240x120'
-        X = np.load(fileToDecode+'.npz')
+        X = np.load(fileToDecode + '.npz')
         mean = X['mean']
         std = X['std']
-        scale = X['scale']
+
         print('\n')
 
         X = np.array(np.load(fileToDecode+'.npz')['clips'])
@@ -139,11 +139,11 @@ for filename in allFiles:
         network.compile(optimizer='adam', loss='mse')
         network.summary()
 
+        weightsFile = 'weights/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5'
 
-        network.load_weights(
-            'weights/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5')
+        network.load_weights(weightsFile)
 
-        print('decoding...')
+        print('decoding... with '+weightsFile)
 
         #print(">MSE I/O NN Q <> QHat:")
         #print(mse(trainingData, decoded_quat))
@@ -188,7 +188,7 @@ for filename in allFiles:
                     input = np.array(m[0].tolist()+m[1].tolist()+m[2].tolist()) #9 values
                     joints.append(input)
 
-            reformatRotations.append(joints*scale)
+            reformatRotations.append(joints)
 
         reformatRotations = np.array(reformatRotations)
 
@@ -203,7 +203,7 @@ for filename in allFiles:
 
         decoded_quat = array(network.predict(X))
 
-        rotations = (((decoded_quat)*std)+mean)/scale
+        rotations = (((decoded_quat)*std)+mean)
 
         idx = 0
 
