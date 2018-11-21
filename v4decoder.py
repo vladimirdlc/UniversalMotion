@@ -2,7 +2,7 @@ import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-from mse_calc import mseAB_files
+from rmse_calc import rmseAB_files
 from keras.models import load_model
 import eulerangles as eang
 from numpy import array
@@ -251,7 +251,7 @@ for filename in allFiles:
         fileA = outputFolder + '60fps/' + filename + '/' + 'input_' + filename + '.bvh'
         fileB = fullFileName
 
-        total_mse = mseAB_files(fileA.replace("_10d","").replace("_20d","").replace("_90d","").replace("_45d",""), fileB)
+        total_mse = rmseAB_files(fileA.replace("_10d","").replace("_20d","").replace("_90d","").replace("_45d",""), fileB)
         strout = ("f1:{},f2:{},{}\n".format(fileA, fileB, "{0:.4f}".format(total_mse)))
         print(strout)
 
