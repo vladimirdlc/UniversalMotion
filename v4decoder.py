@@ -103,13 +103,13 @@ def chunks(l, n):
 
 outputFolder = 'decoded/'
 #filename = '144_21_parsed'
-allDecodes = [Decoder.QUATERNION]
-#allDecodes = [Decoder.AXIS_ANGLE, Decoder.EULER, Decoder.QUATERNION, Decoder.ROTATION_MATRIX]
+#allDecodes = [Decoder.QUATERNION]
+allDecodes = [Decoder.AXIS_ANGLE]
 #'144_21', '144_21_45d', '144_21_90d', 'gorilla_run', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric',
 #allFiles = ['144_21', '144_21_10d', '144_21_20d', '144_21_45d', '144_21_90d',
 #            'b0041_kicking', 'b0041_kicking_10d', 'b0041_kicking_20d', 'b0041_kicking_45d', 'b0041_kicking_90d',
 #            'gorilla_run', 'gorilla_run_10d', 'gorilla_run_20d', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric']
-allFiles = ['gorilla_run_to_interpolate_10f']
+allFiles = ['144_21']
 
 customFrameTime = 0.031667
 file1 = open("MSE.txt", "a")
@@ -230,14 +230,14 @@ for filename in allFiles:
                     elif decodeType is Decoder.AXIS_ANGLE:
                         z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #theta, x, y, z
                         joint = np.degrees([z, y, x])  # in z,y,x format
-                        joints.append(joint)
+                        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
                     elif decodeType is Decoder.ROTATION_MATRIX:
                         m0 = np.array([joint[0], joint[1], joint[2]])
                         m1 = np.array([joint[3], joint[4], joint[5]])
                         m2 = np.array([joint[6], joint[7], joint[8]])
                         m = [m0, m1, m2]
                         joint = eang.mat2euler(m)  # in z,y,x rad format
-                        joints.append(joint)
+                        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
                     j += 1
                 idx += 1
 
