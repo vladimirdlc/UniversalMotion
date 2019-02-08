@@ -115,6 +115,6 @@ for decodeType in allDecodes:
 	data_clips -= mean
 	data_clips /= std
 	np.savez_compressed(
-		'cmu_{}_cmu_{}j_w{}x{}'.format(decodeType.value, data_clips.shape[2], wdw, step), clips=data_clips, std=std, mean=mean)
+		'cmu_{}_{}j_w{}x{}'.format(decodeType.value, data_clips.shape[2], wdw, step), clips=data_clips, std=std, mean=mean)
 
 	print('done')

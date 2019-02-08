@@ -23,21 +23,13 @@ from math import radians, degrees
 import sys
 import keras as K
 from itertools import islice
-from keras.layers.recurrent import LSTM
-
-from keras.layers.normalization import BatchNormalization
-from keras.layers import GRU
 
 np.set_printoptions(suppress=True,
    formatter={'float_kind':'{:0.2f}'.format})
 np.random.seed(0)
 
 version = "tq3"
-fileChanged = "cmu_rotations_Euler_cmu_21_standardized_w240_ws120_normalfps_scaled1"
-
-#fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w8_ws4_normalfps_scaled1000"
-#fileChanged = "data_cmu_RotMat_full_j20_ws240x120_standardized_scaled10000000"
-#fileChanged = "cmu_rotations_Quat_cmu_20_standardized_w240_ws120_normalfps_scaled1000"
+fileChanged = "cmu_Euler_21j_w240x120"
 
 print('started processing {}', fileChanged)
 X = np.load(fileChanged+".npz")['clips']
@@ -50,19 +42,8 @@ qdata = array(X)
 X = None
 
 # split into 80% for train and 20% for test
-#trainingData = qdata
 trainingData, validationData = train_test_split(qdata, test_size=0.2)
 
-#validationData = array(qdata[0:dataSplitPoint])
-#trainingData = array(qdata[0,dataSplitPoint:-1])
-#validationData = validationData.tolist()
-#validationData.append(qdata[0])
-#validationData = np.array(validationData)
-#trainingData = qdata
-#testData = testData.reshape([], testData.shape[0], testData.shape[1])
-
-#print(validationData.shape)
-#print(testFile.shape)
 network = Sequential()
 degreesOFreedom = trainingData.shape[2] #joints * degreees of freedom
 windowSize = trainingData.shape[1] #temporal window 240 frames
@@ -81,32 +62,21 @@ network.add(Dropout(dropoutAmount, input_shape=(windowSize, hiddenUnits)))
 network.add(Conv1D(degreesOFreedom, kernel_size, activation='linear', use_bias=True, padding='same'))
 
 network.summary()
-'''
-network.add(Dense(hiddenUnits, input_shape=(windowSize,degreesOFreedom)))
-network.add(Conv1D(hiddenUnits, (kernel_size,), activation=activationType, use_bias=True, padding='same'))
-network.add(MaxPooling1D(2, padding='same'))
-network.add(Dropout(rate=0.25,input_shape=(degreesOFreedom,hiddenUnits)))
-network.add(UpSampling1D(size=2))
-network.add(Dropout(rate=0.25,input_shape=(degreesOFreedom,hiddenUnits)))
-network.add(Conv1D(degreesOFreedom, (kernel_size,), activation=activationType, use_bias=True, padding='same'))
-network.summary()
-'''
+
 epochs = 600
 
 myadam = optimizers.adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
-#myadam = optimizers.adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 
 network.compile(optimizer=myadam, loss='mse')
 
 batch_size = 128
-#network.load_weights('cmu_rotations_full_cmu_30_w240_standardized_scaled10000_k15_hu512_vtq2_e400_d0.25_bz1_weigths.h5')
 
-idPrefix = '{}_k{}_hu{}_v{}_e{}_d{}_bz{}_valtest0.2_activation{}'.format(fileChanged,kernel_size,hiddenUnits, version, epochs, dropoutAmount, batch_size, activationType)
+idPrefix = '{}_k{}_hu{}_e{}_d{}_bz{}_valtest0.2_activation{}'.format(fileChanged, kernel_size, hiddenUnits, epochs, dropoutAmount, batch_size, activationType)
 
 plot_losses = PlotLoss(epochs, 'results/'+idPrefix)
 
 print(trainingData.shape)
-#print(validationData.shape)
+
 history_callback = network.fit(trainingData, trainingData, verbose=2,
                 epochs=epochs,
                 batch_size=batch_size,

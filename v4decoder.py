@@ -137,11 +137,11 @@ for filename in allFiles:
         # split into 80% for train and 20% for tests
 
         network = load_model(
-            'models/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
+            'models/'+fileToDecode+'_k25_hu256_e600_d0.15_bz128_valtest0.2_activationrelu_model.h5')
         network.compile(optimizer='adam', loss='mse')
         network.summary()
 
-        weightsFile = 'weights/'+fileToDecode+'_k25_hu256_vtq3_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5'
+        weightsFile = 'weights/'+fileToDecode+'_k25_hu256_e600_d0.15_bz128_valtest0.2_activationrelu_weights.h5'
 
         network.load_weights(weightsFile)
 
