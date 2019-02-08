@@ -106,12 +106,12 @@ def chunks(l, n):
 outputFolder = 'decoded/'
 #filename = '144_21_parsed'
 #allDecodes = [Decoder.QUATERNION]
-allDecodes = [Decoder.EULER, Decoder.ROTATION_MATRIX, Decoder.AXIS_ANGLE]
+allDecodes = [Decoder.AXIS_ANGLE]
 #'144_21', '144_21_45d', '144_21_90d', 'gorilla_run', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric',
-#allFiles = ['144_21', '144_21_10d', '144_21_20d', '144_21_45d', '144_21_90d',
-#            'b0041_kicking', 'b0041_kicking_10d', 'b0041_kicking_20d', 'b0041_kicking_45d', 'b0041_kicking_90d',
-#            'gorilla_run', 'gorilla_run_10d', 'gorilla_run_20d', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric']
-allFiles = ['144_21']
+allFiles = ['144_21', '144_21_10d', '144_21_20d', '144_21_45d', '144_21_90d',
+            'b0041_kicking', 'b0041_kicking_10d', 'b0041_kicking_20d', 'b0041_kicking_45d', 'b0041_kicking_90d',
+            'gorilla_run', 'gorilla_run_10d', 'gorilla_run_20d', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric']
+#allFiles = ['144_21']
 
 customFrameTime = 0.031667
 file1 = open("MSE.txt", "a")
@@ -179,9 +179,10 @@ for filename in allFiles:
                     joints.append(Quaternions(joint).euler().ravel())
                 elif decodeType is Decoder.AXIS_ANGLE:
                     angle, axis = Quaternions(joint).angle_axis()
-                    input = axis.flatten()
-                    input = np.insert(input, 0, angle)
-                    input = np.array(input) #4 values
+                    axis = axis.flatten()
+                    axis = [axis[0], axis[1], axis[2]]  # we store in zyx
+                    input = np.insert(axis, 0, angle)
+                    input = np.array(input)  # 4 values
                     joints.append(input)
                 elif decodeType is Decoder.ROTATION_MATRIX:
                     euler = Quaternions(joint).euler().ravel() #we get x,y,z
@@ -229,9 +230,9 @@ for filename in allFiles:
                     elif decodeType is Decoder.EULER:
                         anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
                     elif decodeType is Decoder.AXIS_ANGLE:
-                        z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #expects theta, z, y, x
-                        joint = [z, y, x]  # in z,y,x format
-                        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
+                        x, y, z = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #expects theta, z, y, x
+                        joint = [x, y, z]  # in z,y,x format
+                        anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='xyz')
                     elif decodeType is Decoder.ROTATION_MATRIX:
                         m0 = np.array([joint[0], joint[1], joint[2]])
                         m1 = np.array([joint[3], joint[4], joint[5]])
@@ -242,9 +243,9 @@ for filename in allFiles:
                     j += 1
                 idx += 1
 
-        fullFileName = outputFolder+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
+        fullFileName = outputFolder+filename+'_'+fileToDecode+'.bvh'
         BVH.save(fullFileName, anim)
-        fullFileName = outputFolder+'60fps/'+filename+'/'+filename+'_decoded_'+decodeType.value+'_'+fileToDecode+'.bvh'
+        fullFileName = outputFolder+'60fps/'+filename+'/'+filename+'_'+fileToDecode+'.bvh'
         anim60 = anim[::2] # convert to 60fps
         BVH.save(fullFileName, anim60, frametime=customFrameTime)
 
