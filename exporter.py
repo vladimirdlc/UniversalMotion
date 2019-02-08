@@ -25,37 +25,11 @@ import eulerangles as eang
 
 wdw = 240
 step = 120
-scale = 1
 
-allDecodes = [Decoder.QUATERNION, Decoder.ROTATION_MATRIX]
+allDecodes = [Decoder.ROTATION_MATRIX, Decoder.AXIS_ANGLE, Decoder.EULER]
 
 def process_file_rotations(filename, window=240, window_step=120):
     anim, names, frametime = BVH.load(filename, order='zyx')
-
-    """ Convert to 60 fps """
-    # anim = anim[::2]
-
-    '''anim = anim[:,np.array([
-         0,
-         2,  3,  4,  5,
-         7,  8,  9, 10,
-        12, 13, 15, 16,
-        18, 19, 20, 22,
-        25, 26, 27, 29])]
-
-    names = np.array(names)
-    names = names[np.array([
-         0,
-         2,  3,  4,  5,
-         7,  8,  9, 10,
-        12, 13, 15, 16,
-        18, 19, 20, 22,
-        25, 26, 27, 29])]
-
-    print(names.shape)
-    filename = filename.replace('.bvh', '_')
-    BVH.save(filename+'parsed.bvh', anim)
-	'''
 
     """ Do FK """
     print(len(anim.rotations))
@@ -73,21 +47,23 @@ def process_file_rotations(filename, window=240, window_step=120):
 
         for joint in frame:
             if decodeType is Decoder.QUATERNION:
-                joints.append(joint * scale)
+                joints.append(joint)
             elif decodeType is Decoder.EULER:
-                joints.append(Quaternions(joint).euler().ravel() * scale)
+                xyz = Quaternions(joint).euler().ravel()
+                joints.append([xyz[2], xyz[1], xyz[0]]) #we store in zyx
             elif decodeType is Decoder.AXIS_ANGLE:
                 angle, axis = Quaternions(joint).angle_axis()
-                input = axis.flatten()
-                input = np.insert(input, 0, angle)
+                axis = axis.flatten()
+                axis = [axis[2], axis[1], axis[0]] #we store in zyx
+                input = np.insert(axis, 0, angle)
                 input = np.array(input)  # 4 values
-                joints.append(input * scale)
+                joints.append(input)
             elif decodeType is Decoder.ROTATION_MATRIX:
                 euler = Quaternions(joint).euler().ravel()  # we get x,y,z
                 # eang library uses convention z,y,x
                 m = eang.euler2mat(euler[2], euler[1], euler[0])
                 input = np.array(m[0].tolist() + m[1].tolist() + m[2].tolist())  # 9 values
-                joints.append(input*scale)
+                joints.append(input)
 
         reformatRotations.append(joints)
 
@@ -139,6 +115,6 @@ for decodeType in allDecodes:
 	data_clips -= mean
 	data_clips /= std
 	np.savez_compressed(
-		'cmu_rotations_{}_cmu_{}_standardized_w{}_ws{}_normalfps_scaled{}'.format(decodeType.value, data_clips.shape[2], wdw, step, scale), clips=data_clips, std=std, mean=mean, scale=scale)
+		'cmu_{}_cmu_{}j_w{}x{}'.format(decodeType.value, data_clips.shape[2], wdw, step), clips=data_clips, std=std, mean=mean)
 
 	print('done')

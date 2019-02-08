@@ -225,10 +225,9 @@ for filename in allFiles:
                     if decodeType is Decoder.QUATERNION:
                         anim.rotations[idx][j] = Quaternions(joint)
                     elif decodeType is Decoder.EULER:
-                        joint = [joint[2], joint[1], joint[0]]
                         anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
                     elif decodeType is Decoder.AXIS_ANGLE:
-                        z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #theta, x, y, z
+                        z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #expects theta, z, y, x
                         joint = np.degrees([z, y, x])  # in z,y,x format
                         anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
                     elif decodeType is Decoder.ROTATION_MATRIX:
