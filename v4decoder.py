@@ -62,11 +62,13 @@ def process_file_rotations(filename, window=240, window_step=120):
             if decodeType is Decoder.QUATERNION:
                 joints.append(joint)
             elif decodeType is Decoder.EULER:
-                joints.append(Quaternions(joint).euler().ravel())
+                xyz = Quaternions(joint).euler().ravel()
+                joints.append([xyz[2], xyz[1], xyz[0]]) #we store in zyx
             elif decodeType is Decoder.AXIS_ANGLE:
                 angle, axis = Quaternions(joint).angle_axis()
-                input = axis.flatten()
-                input = np.insert(input, 0, angle)
+                axis = axis.flatten()
+                axis = [axis[2], axis[1], axis[0]] #we store in zyx
+                input = np.insert(axis, 0, angle)
                 input = np.array(input)  # 4 values
                 joints.append(input)
             elif decodeType is Decoder.ROTATION_MATRIX:
@@ -104,7 +106,7 @@ def chunks(l, n):
 outputFolder = 'decoded/'
 #filename = '144_21_parsed'
 #allDecodes = [Decoder.QUATERNION]
-allDecodes = [Decoder.AXIS_ANGLE]
+allDecodes = [Decoder.EULER, Decoder.ROTATION_MATRIX, Decoder.AXIS_ANGLE]
 #'144_21', '144_21_45d', '144_21_90d', 'gorilla_run', 'gorilla_run_45d', 'gorilla_run_90d', 'gorilla_run_asymmetric',
 #allFiles = ['144_21', '144_21_10d', '144_21_20d', '144_21_45d', '144_21_90d',
 #            'b0041_kicking', 'b0041_kicking_10d', 'b0041_kicking_20d', 'b0041_kicking_45d', 'b0041_kicking_90d',
@@ -228,7 +230,7 @@ for filename in allFiles:
                         anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
                     elif decodeType is Decoder.AXIS_ANGLE:
                         z, y, x = eang.angle_axis2euler(joint[0], [joint[1], joint[2], joint[3]]) #expects theta, z, y, x
-                        joint = np.degrees([z, y, x])  # in z,y,x format
+                        joint = [z, y, x]  # in z,y,x format
                         anim.rotations[idx][j] = Quaternions.from_euler(np.array(joint), order='zyx')
                     elif decodeType is Decoder.ROTATION_MATRIX:
                         m0 = np.array([joint[0], joint[1], joint[2]])
